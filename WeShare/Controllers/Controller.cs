@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebAPI.Models;
@@ -10,13 +11,13 @@ public class Controller : ControllerBase
 {
     private readonly WeshareContext _context = new();
 
-    /// <summary>
-    ///     Gets all user emails from the database.
-    /// </summary>
-    /// <returns>
-    ///     A List of all user emails.
-    /// </returns>
-    [HttpGet(nameof(GetUserEmails))]
+	/// <summary>
+	///     Gets all user emails from the database.
+	/// </summary>
+	/// <returns>
+	///     A List of all user emails.
+	/// </returns>
+	[HttpGet(nameof(GetUserEmails))]
     public async Task<ActionResult<List<string>>> GetUserEmails()
     {
         return await _context.Users.Select(u => u.Email).ToListAsync();
@@ -35,15 +36,15 @@ public class Controller : ControllerBase
         return await _context.Users.Where(u => deactivatedUserIDs.Contains(u.Id)).Select(u => u.Email).ToListAsync();
     }
 
-    /// <summary>
-    ///     Inserts a new user in the database.
-    /// </summary>
-    /// <param name="email"></param>
-    /// <param name="firstName"></param>
-    /// <param name="lastName"></param>
-    /// <param name="phoneNumber"></param>
-    [HttpPost(nameof(InsertUser))]
-    public void InsertUser(string email, string firstName, string lastName, string phoneNumber)
+	/// <summary>
+	///     Inserts a new user in the database.
+	/// </summary>
+	/// <param name="email"></param>
+	/// <param name="firstName"></param>
+	/// <param name="lastName"></param>
+	/// <param name="phoneNumber"></param>
+	[HttpPost(nameof(InsertUser)+"{email}/{firstName}/{lastName}/{phoneNumber}")]
+	public void InsertUser(string email, string firstName, string lastName, string phoneNumber)
     {
         _context.Users.Add(new User
         {
@@ -52,7 +53,7 @@ public class Controller : ControllerBase
             LastName = lastName,
             PhoneNumber = phoneNumber
         });
-        _context.SaveChanges();
+        _context.SaveChangesAsync();
     }
 
     /// <summary>
@@ -61,7 +62,7 @@ public class Controller : ControllerBase
     /// </summary>
     /// <param name="userId"></param>
     /// <param name="groupName"></param>
-    [HttpPost(nameof(InsertGroup))]
+    [HttpPost(nameof(InsertGroup)+"{userId}/{groupName}")]
     public void InsertGroup(int userId, string groupName)
     {
         _context.Groups.Add(new Group
@@ -70,14 +71,14 @@ public class Controller : ControllerBase
             Date = DateTime.Now,
             Closed = false
         });
-        _context.SaveChanges();
+        _context.SaveChangesAsync();
         _context.UserToGroups.Add(new UserToGroup
         {
             UserId = userId,
             GroupId = _context.Groups.OrderByDescending(g => g.Id).First().Id,
             IsOwner = true
         });
-        _context.SaveChanges();
+        _context.SaveChangesAsync();
     }
 
     /// <summary>
@@ -85,7 +86,7 @@ public class Controller : ControllerBase
     /// </summary>
     /// <param name="groupId"></param>
     /// <returns></returns>
-    [HttpGet(nameof(GetGroupPayments))]
+    [HttpGet(nameof(GetGroupPayments)+"{groupId}")]
     public IEnumerable<Payment> GetGroupPayments(int groupId)
     {
         var userToGroupIDs = _context.UserToGroups.Where(u => u.GroupId == groupId).Select(u => u.Id);
@@ -98,7 +99,7 @@ public class Controller : ControllerBase
     /// <param name="userId"></param>
     /// <param name="groupId"></param>
     /// <param name="amount"></param>
-    [HttpPost(nameof(InsertPayment))]
+    [HttpPost(nameof(InsertPayment)+"{userId}/{groupId}/{amount}")]
     public void InsertPayment(int userId, int groupId, double amount)
     {
         var userToGroupId = _context.UserToGroups.First(u => u.UserId == userId && u.GroupId == groupId).Id;
@@ -108,7 +109,7 @@ public class Controller : ControllerBase
             Amount = amount,
             Date = DateTime.Now,
         });
-        _context.SaveChanges();
+        _context.SaveChangesAsync();
     }
 
     /// <summary>
@@ -116,7 +117,7 @@ public class Controller : ControllerBase
     /// </summary>
     /// <param name="userId"></param>
     /// <param name="friendId"></param>
-    [HttpPost(nameof(InsertFriendship))]
+    [HttpPost(nameof(InsertFriendship)+"{userId}/{friendId}")]
     public void InsertFriendship(int userId, int friendId)
     {
         _context.Friendships.Add(new Friendship
@@ -124,7 +125,7 @@ public class Controller : ControllerBase
             User1Id = userId,
             User2Id = friendId
         });
-        _context.SaveChanges();
+        _context.SaveChangesAsync();
     }
 
     /// <summary>
@@ -134,7 +135,7 @@ public class Controller : ControllerBase
     /// <returns>
     ///     A List of all the friends of a user.
     /// </returns>
-    [HttpGet(nameof(GetFriends))]
+    [HttpGet(nameof(GetFriends)+"{userId}")]
     public IEnumerable<User> GetFriends(int userId)
     {
         var friendIds = _context.Friendships.Where(f => f.User1Id == userId).Select(f => f.User2Id);
@@ -154,7 +155,7 @@ public class Controller : ControllerBase
     /// <param name="senderId"></param>
     /// <param name="receiverId"></param>
     /// <param name="groupId"></param>
-    [HttpPost(nameof(InsertGroupInvite))]
+    [HttpPost(nameof(InsertGroupInvite)+"{senderId}/{receiverId}/{groupId}")]
     public void InsertGroupInvite(int senderId, int receiverId, int groupId)
     {
         if (_context.UserToGroups.Any(u => u.UserId == receiverId && u.GroupId == groupId))
@@ -177,7 +178,7 @@ public class Controller : ControllerBase
             ReceiverId = receiverId,
             GroupId = groupId
         });
-        _context.SaveChanges();
+        _context.SaveChangesAsync();
     }
 
     /// <summary>
@@ -185,13 +186,13 @@ public class Controller : ControllerBase
     /// </summary>
     /// <param name="receiverId"></param>
     /// <param name="groupId"></param>
-    [HttpDelete(nameof(RemoveGroupInvite))]
+    [HttpDelete(nameof(RemoveGroupInvite)+"{receiverId}/{groupId}")]
     public void RemoveGroupInvite(int receiverId, int groupId)
     {
         var invite = _context.Invites.FirstOrDefault(i => i.ReceiverId == receiverId && i.GroupId == groupId);
         if (invite == null) return;
         _context.Invites.Remove(invite);
-        _context.SaveChanges();
+        _context.SaveChangesAsync();
     }
 
     /// <summary>
@@ -199,7 +200,7 @@ public class Controller : ControllerBase
     /// </summary>
     /// <param name="groupId"></param>
     /// <param name="userId"></param>
-    [HttpPost(nameof(InsertToBePaid))]
+    [HttpPost(nameof(InsertToBePaid)+"{groupId}/{userId}")]
     public void InsertToBePaid(int groupId, int userId)
     {
         if (!_context.UserToGroups.Any(u => u.UserId == userId && u.GroupId == groupId && u.IsOwner))
@@ -215,7 +216,7 @@ public class Controller : ControllerBase
                 Date = null
             });
 
-            _context.SaveChanges();
+            _context.SaveChangesAsync();
         }
 
         // Remove all the invites for the group.
@@ -223,20 +224,20 @@ public class Controller : ControllerBase
             RemoveGroupInvite(invite.ReceiverId, invite.GroupId);
     }
 
-    /// <summary>
-    ///     Approves a ToBePaid value in the database.
-    /// </summary>
-    /// <param name="userId"></param>
-    /// <param name="groupId"></param>
-    [HttpPost(nameof(ApproveToBePaid))]
-    public void ApproveToBePaid(int groupId, int userId)
+	/// <summary>
+	///     Approves a ToBePaid value in the database.
+	/// </summary>
+	/// <param name="userId"></param>
+	/// <param name="groupId"></param>
+	[HttpPut(nameof(ApproveToBePaid)+"{userId}/{groupId}")]
+	public void ApproveToBePaid(int groupId, int userId)
     {
         var userToGroupId = _context.UserToGroups.FirstOrDefault(u => u.UserId == userId && u.GroupId == groupId).Id;
         var toBePaid = _context.ToBePaids.FirstOrDefault(t => t.UserToGroupId == userToGroupId);
         if (toBePaid == null) return;
         toBePaid.Approved = true;
         toBePaid.Date = DateTime.Now;
-        _context.SaveChanges();
+        _context.SaveChangesAsync();
         // if all ToBePaid values are approved for the group
         var userToGroupIds = _context.UserToGroups.Where(u => u.GroupId == groupId).Select(u => u.Id);
         if (_context.ToBePaids.Where(t => userToGroupIds.Contains(t.UserToGroupId)).All(t => t.Approved))
@@ -247,7 +248,7 @@ public class Controller : ControllerBase
     ///     Inserts receipts for a group.
     /// </summary>
     /// <param name="groupId"></param>
-    [HttpPost(nameof(InsertReceipts))]
+    [HttpPost(nameof(InsertReceipts)+"{groupId}")]
     public void InsertReceipts(int groupId)
     {
         var userToGroupIds = _context.UserToGroups.Where(u => u.GroupId == groupId).Select(u => u.Id);
@@ -266,7 +267,7 @@ public class Controller : ControllerBase
                     Amount = p.Amount - amountPerUser, 
                     Fulfilled = false,
                 }));
-        _context.SaveChanges();
+        _context.SaveChangesAsync();
     }
     
     /// <summary>
@@ -277,7 +278,7 @@ public class Controller : ControllerBase
     /// <returns>
     ///    The receipt for a user in a group.
     /// </returns>
-    [HttpGet(nameof(GetReceipt))]
+    [HttpGet(nameof(GetReceipt)+"{groupId}/{userId}")]
     public Receipt GetReceipt(int groupId, int userId)
     {
         var userToGroupId = _context.UserToGroups.FirstOrDefault(u => u.UserId == userId && u.GroupId == groupId).Id;
@@ -289,7 +290,7 @@ public class Controller : ControllerBase
     /// </summary>
     /// <param name="userId"></param>
     /// <param name="groupId"></param>
-    [HttpPost(nameof(PayReceipt))]
+    [HttpPut(nameof(PayReceipt)+"{userId}/{groupId}")]
     public void PayReceipt(int groupId, int userId)
     {
         var receipt = _context.Receipts.FirstOrDefault(r => r.UserToGroupId == _context.UserToGroups.FirstOrDefault(u => u.UserId == userId && u.GroupId == groupId).Id);
@@ -298,7 +299,7 @@ public class Controller : ControllerBase
         _context.Wallets.FirstOrDefault(w => w.UserId == userId).Balance += receipt.Amount;
         receipt.Date = DateTime.Now;
         receipt.Fulfilled = true;
-        _context.SaveChanges();
+        _context.SaveChangesAsync();
         
         // if all receipts are fulfilled for the group, close the group.
         var userToGroupIds = _context.UserToGroups.Where(u => u.GroupId == groupId).Select(u => u.Id);
@@ -310,12 +311,12 @@ public class Controller : ControllerBase
     ///     Closes a group.
     /// </summary>
     /// <param name="groupId"></param>
-    [HttpPost(nameof(CloseGroup))]
+    [HttpPut(nameof(CloseGroup)+"{groupId}")]
     public void CloseGroup(int groupId)
     {
         var group = _context.Groups.FirstOrDefault(g => g.Id == groupId);
         group.Closed = true;
-        _context.SaveChanges();
+        _context.SaveChangesAsync();
     }
     
     /// <summary>
@@ -324,14 +325,14 @@ public class Controller : ControllerBase
     /// <param name="groupId"></param>
     /// <param name="userId"></param>
     /// <param name="userToRemoveId"></param>
-    [HttpDelete(nameof(RemoveUserFromGroup))]
+    [HttpDelete(nameof(RemoveUserFromGroup)+"{groupId}/{userId}/{userToRemoveId}")]
     public void RemoveUserFromGroup(int groupId, int userId, int userToRemoveId)
     {
         if (!_context.UserToGroups.Any(u => u.GroupId == groupId && u.UserId == userId && u.IsOwner))
             return;
         var userToGroup = _context.UserToGroups.FirstOrDefault(u => u.GroupId == groupId && u.UserId == userToRemoveId);
         _context.UserToGroups.Remove(userToGroup);
-        _context.SaveChanges();
+        _context.SaveChangesAsync();
     }
     
     /// <summary>
@@ -341,7 +342,7 @@ public class Controller : ControllerBase
     /// <returns>
     ///     A list of receipts.
     /// </returns>
-    [HttpGet(nameof(GetReceipts))]
+    [HttpGet(nameof(GetReceipts)+"{userId}")]
     public IEnumerable<Receipt> GetReceipts(int userId)
     {
         return _context.Receipts.Where(r => r.UserToGroupId == _context.UserToGroups.FirstOrDefault(u => u.UserId == userId).Id).ToList();
@@ -351,7 +352,7 @@ public class Controller : ControllerBase
     ///     Creates a wallet of a random amount of money for a user.
     /// </summary>
     /// <param name="userId"></param>
-    [HttpPost(nameof(InsertWallet))]
+    [HttpPost(nameof(InsertWallet)+"{userId}")]
     public void InsertWallet(int userId)
     {
         if (_context.Wallets.Any(w => w.UserId == userId)) return;
@@ -360,7 +361,7 @@ public class Controller : ControllerBase
             UserId = userId,
             Balance = new Random().Next(5000, 25000)
         });
-        _context.SaveChanges();
+        _context.SaveChangesAsync();
     }
     
     /// <summary>
@@ -368,7 +369,7 @@ public class Controller : ControllerBase
     /// </summary>
     /// <param name="userId"></param>
     /// <param name="until"></param>
-    [HttpPost(nameof(DeactivateUser))]
+    [HttpPut(nameof(DeactivateUser)+"{userId}/{until}")]
     public void DeactivateUser(int userId, DateTime until)
     {
         if (_context.DeactivatedUsers.Any(d => d.UserId == userId)) return;
@@ -377,20 +378,20 @@ public class Controller : ControllerBase
             UserId = userId,
             Until = until
         });
-        _context.SaveChanges();
+        _context.SaveChangesAsync();
     }
     
     /// <summary>
     ///     Activates a user.
     /// </summary>
     /// <param name="userId"></param>
-    [HttpPost(nameof(ActivateUser))]
+    [HttpPut(nameof(ActivateUser)+"{userId}")]
     public void ActivateUser(int userId)
     {
         if (!_context.DeactivatedUsers.Any(d => d.UserId == userId)) return;
         var deactivatedUser = _context.DeactivatedUsers.FirstOrDefault(d => d.UserId == userId);
         _context.DeactivatedUsers.Remove(deactivatedUser);
-        _context.SaveChanges();
+        _context.SaveChangesAsync();
     }
     
     /// <summary>
@@ -401,7 +402,7 @@ public class Controller : ControllerBase
     /// <param name="firstName"></param>
     /// <param name="lastName"></param>
     /// <param name="phoneNumber"></param>
-    [HttpPut(nameof(UpdateUser))]
+    [HttpPut(nameof(UpdateUser)+"{userId}/{email}/{firstName}/{lastName}/{phoneNumber}")]
     public void UpdateUser(int userId, string email, string firstName, string lastName, string phoneNumber)
     {
         var user = _context.Users.FirstOrDefault(u => u.Id == userId);
@@ -409,7 +410,7 @@ public class Controller : ControllerBase
         user.FirstName = firstName;
         user.LastName = lastName;
         user.PhoneNumber = phoneNumber;
-        _context.SaveChanges();
+        _context.SaveChangesAsync();
     }
     
     /// <summary>
@@ -419,7 +420,7 @@ public class Controller : ControllerBase
     /// <returns>
     ///     A list of group invitations.
     /// </returns>
-    [HttpGet(nameof(GetGroupInvitations))]
+    [HttpGet(nameof(GetGroupInvitations)+"{userId}")]
     public IEnumerable<Invite> GetGroupInvitations(int userId)
     {
         return _context.Invites.Where(i => i.ReceiverId == userId).ToList();
@@ -434,7 +435,7 @@ public class Controller : ControllerBase
     /// </summary>
     /// <param name="userId"></param>
     /// <param name="groupId"></param>
-    [HttpPost(nameof(AcceptGroupInvitation))]
+    [HttpPut(nameof(AcceptGroupInvitation)+"{userId}/{groupId}")]
     public void AcceptGroupInvitation(int userId, int groupId)
     {
         var invite = _context.Invites.FirstOrDefault(i => i.ReceiverId == userId && i.GroupId == groupId);
@@ -453,7 +454,7 @@ public class Controller : ControllerBase
             GroupId = groupId,
             IsOwner = false,
         });
-        _context.SaveChanges();
+        _context.SaveChangesAsync();
     }
     
     /// <summary>
@@ -463,7 +464,7 @@ public class Controller : ControllerBase
     /// <returns>
     ///     A list of groups.
     /// </returns>
-    [HttpGet(nameof(GetGroups))]
+    [HttpGet(nameof(GetGroups)+"{userId}")]
     public IEnumerable<Group> GetGroups(int userId)
     {
         return _context.Groups.Where(g => _context.UserToGroups.Any(u => u.GroupId == g.Id && u.UserId == userId)).ToList();
