@@ -53,7 +53,7 @@ public class Controller : ControllerBase
             LastName = lastName,
             PhoneNumber = phoneNumber
         });
-        _context.SaveChangesAsync();
+        _context.SaveChanges();
     }
 
     /// <summary>
@@ -71,14 +71,14 @@ public class Controller : ControllerBase
             Date = DateTime.Now,
             Closed = false
         });
-        _context.SaveChangesAsync();
+        _context.SaveChanges();
         _context.UserToGroups.Add(new UserToGroup
         {
             UserId = userId,
             GroupId = _context.Groups.OrderByDescending(g => g.Id).First().Id,
             IsOwner = true
         });
-        _context.SaveChangesAsync();
+        _context.SaveChanges();
     }
 
     /// <summary>
@@ -109,7 +109,7 @@ public class Controller : ControllerBase
             Amount = amount,
             Date = DateTime.Now,
         });
-        _context.SaveChangesAsync();
+        _context.SaveChanges();
     }
 
     /// <summary>
@@ -125,7 +125,7 @@ public class Controller : ControllerBase
             User1Id = userId,
             User2Id = friendId
         });
-        _context.SaveChangesAsync();
+        _context.SaveChanges();
     }
 
     /// <summary>
@@ -178,7 +178,7 @@ public class Controller : ControllerBase
             ReceiverId = receiverId,
             GroupId = groupId
         });
-        _context.SaveChangesAsync();
+        _context.SaveChanges();
     }
 
     /// <summary>
@@ -192,7 +192,7 @@ public class Controller : ControllerBase
         var invite = _context.Invites.FirstOrDefault(i => i.ReceiverId == receiverId && i.GroupId == groupId);
         if (invite == null) return;
         _context.Invites.Remove(invite);
-        _context.SaveChangesAsync();
+        _context.SaveChanges();
     }
 
     /// <summary>
@@ -205,19 +205,19 @@ public class Controller : ControllerBase
     {
         if (!_context.UserToGroups.Any(u => u.UserId == userId && u.GroupId == groupId && u.IsOwner))
             return;
-        foreach (var userToGroupId in _context.UserToGroups.Where(u => u.GroupId == groupId).Select(u => u.Id))
+		if (_context.ToBePaids.Any(t => t.UserToGroupId == _context.UserToGroups.First(u => u.UserId == userId && u.GroupId == groupId).Id))
+			return;
+		foreach (var userToGroupId in _context.UserToGroups.Where(u => u.GroupId == groupId).Select(u => u.Id))
         {
-            if (_context.ToBePaids.Any(t => t.UserToGroupId == userToGroupId))
-                continue;
-            _context.ToBePaids.Add(new ToBePaid
+			_context.ToBePaids.Add(new ToBePaid
             {
                 UserToGroupId = userToGroupId,
                 Approved = false,
                 Date = null
             });
-
-            _context.SaveChangesAsync();
         }
+		
+        _context.SaveChanges();
 
         // Remove all the invites for the group.
         foreach (var invite in _context.Invites.Where(i => i.GroupId == groupId))
@@ -237,7 +237,7 @@ public class Controller : ControllerBase
         if (toBePaid == null) return;
         toBePaid.Approved = true;
         toBePaid.Date = DateTime.Now;
-        _context.SaveChangesAsync();
+        _context.SaveChanges();
         // if all ToBePaid values are approved for the group
         var userToGroupIds = _context.UserToGroups.Where(u => u.GroupId == groupId).Select(u => u.Id);
         if (_context.ToBePaids.Where(t => userToGroupIds.Contains(t.UserToGroupId)).All(t => t.Approved))
@@ -248,8 +248,7 @@ public class Controller : ControllerBase
     ///     Inserts receipts for a group.
     /// </summary>
     /// <param name="groupId"></param>
-    [HttpPost(nameof(InsertReceipts)+"{groupId}")]
-    public void InsertReceipts(int groupId)
+    private void InsertReceipts(int groupId)
     {
         var userToGroupIds = _context.UserToGroups.Where(u => u.GroupId == groupId).Select(u => u.Id);
         // Get the total amount of money that the group has spent.
@@ -267,7 +266,7 @@ public class Controller : ControllerBase
                     Amount = p.Amount - amountPerUser, 
                     Fulfilled = false,
                 }));
-        _context.SaveChangesAsync();
+        _context.SaveChanges();
     }
     
     /// <summary>
@@ -299,7 +298,7 @@ public class Controller : ControllerBase
         _context.Wallets.FirstOrDefault(w => w.UserId == userId).Balance += receipt.Amount;
         receipt.Date = DateTime.Now;
         receipt.Fulfilled = true;
-        _context.SaveChangesAsync();
+        _context.SaveChanges();
         
         // if all receipts are fulfilled for the group, close the group.
         var userToGroupIds = _context.UserToGroups.Where(u => u.GroupId == groupId).Select(u => u.Id);
@@ -311,12 +310,11 @@ public class Controller : ControllerBase
     ///     Closes a group.
     /// </summary>
     /// <param name="groupId"></param>
-    [HttpPut(nameof(CloseGroup)+"{groupId}")]
-    public void CloseGroup(int groupId)
+    private void CloseGroup(int groupId)
     {
         var group = _context.Groups.FirstOrDefault(g => g.Id == groupId);
         group.Closed = true;
-        _context.SaveChangesAsync();
+        _context.SaveChanges();
     }
     
     /// <summary>
@@ -330,9 +328,13 @@ public class Controller : ControllerBase
     {
         if (!_context.UserToGroups.Any(u => u.GroupId == groupId && u.UserId == userId && u.IsOwner))
             return;
-        var userToGroup = _context.UserToGroups.FirstOrDefault(u => u.GroupId == groupId && u.UserId == userToRemoveId);
+		if (_context.ToBePaids.Any(t => t.UserToGroupId == _context.UserToGroups.FirstOrDefault(u => u.GroupId == groupId && u.UserId == userToRemoveId).Id))
+			return;
+		if (_context.Groups.FirstOrDefault(g => g.Id == groupId).Closed)
+			return;
+	    var userToGroup = _context.UserToGroups.FirstOrDefault(u => u.GroupId == groupId && u.UserId == userToRemoveId);
         _context.UserToGroups.Remove(userToGroup);
-        _context.SaveChangesAsync();
+        _context.SaveChanges();
     }
     
     /// <summary>
@@ -361,7 +363,7 @@ public class Controller : ControllerBase
             UserId = userId,
             Balance = new Random().Next(5000, 25000)
         });
-        _context.SaveChangesAsync();
+        _context.SaveChanges();
     }
     
     /// <summary>
@@ -378,7 +380,7 @@ public class Controller : ControllerBase
             UserId = userId,
             Until = until
         });
-        _context.SaveChangesAsync();
+        _context.SaveChanges();
     }
     
     /// <summary>
@@ -391,7 +393,7 @@ public class Controller : ControllerBase
         if (!_context.DeactivatedUsers.Any(d => d.UserId == userId)) return;
         var deactivatedUser = _context.DeactivatedUsers.FirstOrDefault(d => d.UserId == userId);
         _context.DeactivatedUsers.Remove(deactivatedUser);
-        _context.SaveChangesAsync();
+        _context.SaveChanges();
     }
     
     /// <summary>
@@ -410,7 +412,7 @@ public class Controller : ControllerBase
         user.FirstName = firstName;
         user.LastName = lastName;
         user.PhoneNumber = phoneNumber;
-        _context.SaveChangesAsync();
+        _context.SaveChanges();
     }
     
     /// <summary>
@@ -454,7 +456,7 @@ public class Controller : ControllerBase
             GroupId = groupId,
             IsOwner = false,
         });
-        _context.SaveChangesAsync();
+        _context.SaveChanges();
     }
     
     /// <summary>
