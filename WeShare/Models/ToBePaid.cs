@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿namespace WebAPI.Models;
 
-namespace WebAPI.Models;
-
-public partial class ToBePaid
+public class ToBePaid
 {
     public int Id { get; set; }
 
