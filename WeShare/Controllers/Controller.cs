@@ -201,7 +201,9 @@ public class Controller : ControllerBase
         var wallet = (from w in _context.Wallets
             where w.UserId == userId
             select w).FirstOrDefault();
-        wallet.Balance -= amount;
+		if (wallet == null) return;
+		
+		wallet.Balance -= amount;
         _context.SaveChanges();
     }
 
@@ -228,7 +230,12 @@ public class Controller : ControllerBase
     [HttpPost(nameof(InsertFriendship) + "{userId}/{friendId}")]
     public void InsertFriendship(int userId, int friendId)
     {
-        _context.Friendships.Add(new Friendship
+        var friendship = from f in _context.Friendships 
+                         where f.User1Id == userId && f.User2Id == friendId 
+                         select f;
+		if (friendship.Any()) return;
+
+		_context.Friendships.Add(new Friendship
         {
             User1Id = userId,
             User2Id = friendId
@@ -347,7 +354,7 @@ public class Controller : ControllerBase
     {
         var invite = (from i in _context.Invites
             where i.ReceiverId == receiverId && i.GroupId == groupId
-            select i).Cast<Invite>().First();
+            select i).First();
         if (invite == null) return;
         _context.Invites.Remove(invite);
         _context.SaveChanges();
@@ -395,8 +402,7 @@ public class Controller : ControllerBase
     {
         if (!_context.UserToGroups.Any(u => u.UserId == userId && u.GroupId == groupId && u.IsOwner))
             return;
-        if (_context.ToBePaids.Any(t =>
-                t.UserToGroupId == _context.UserToGroups.First(u => u.UserId == userId && u.GroupId == groupId).Id))
+        if (_context.ToBePaids.Any(t => t.UserToGroupId == _context.UserToGroups.First(u => u.UserId == userId && u.GroupId == groupId).Id))
             return;
         foreach (var userToGroupId in _context.UserToGroups.Where(u => u.GroupId == groupId).Select(u => u.Id))
             _context.ToBePaids.Add(new ToBePaid
