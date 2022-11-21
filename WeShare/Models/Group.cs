@@ -1,6 +1,9 @@
-﻿namespace WebAPI.Models;
+﻿using System;
+using System.Collections.Generic;
 
-public class Group
+namespace WebAPI.Models;
+
+public partial class Group
 {
     public int Id { get; set; }
 

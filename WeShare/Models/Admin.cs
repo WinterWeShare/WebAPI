@@ -1,6 +1,9 @@
-﻿namespace WebAPI.Models;
+﻿using System;
+using System.Collections.Generic;
 
-public class Admin
+namespace WebAPI.Models;
+
+public partial class Admin
 {
     public int Id { get; set; }
 
@@ -9,4 +12,6 @@ public class Admin
     public string FirstName { get; set; } = null!;
 
     public string LastName { get; set; } = null!;
+
+    public virtual ICollection<Action> Actions { get; } = new List<Action>();
 }

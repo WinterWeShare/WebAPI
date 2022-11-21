@@ -1,6 +1,9 @@
-﻿namespace WebAPI.Models;
+﻿using System;
+using System.Collections.Generic;
 
-public class Invite
+namespace WebAPI.Models;
+
+public partial class Invite
 {
     public int Id { get; set; }
 

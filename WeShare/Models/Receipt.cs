@@ -1,6 +1,9 @@
-﻿namespace WebAPI.Models;
+﻿using System;
+using System.Collections.Generic;
 
-public class Receipt
+namespace WebAPI.Models;
+
+public partial class Receipt
 {
     public int Id { get; set; }
 

@@ -1,10 +1,15 @@
-﻿namespace WebAPI.Models;
+﻿using System;
+using System.Collections.Generic;
 
-public class Payment
+namespace WebAPI.Models;
+
+public partial class Payment
 {
     public int Id { get; set; }
 
     public int UserToGroupId { get; set; }
+
+    public string Title { get; set; } = null!;
 
     public double Amount { get; set; }
 

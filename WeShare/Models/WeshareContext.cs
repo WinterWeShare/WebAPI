@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
 
 namespace WebAPI.Models;
 
@@ -12,6 +14,8 @@ public partial class WeshareContext : DbContext
         : base(options)
     {
     }
+
+    public virtual DbSet<Action> Actions { get; set; }
 
     public virtual DbSet<Admin> Admins { get; set; }
 
@@ -36,15 +40,33 @@ public partial class WeshareContext : DbContext
     public virtual DbSet<Wallet> Wallets { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https: //go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer(
-            "Server=135.125.207.90;database=db_weshare;user id=admin_weshare;password=WeSh@r33;trusted_connection=true;TrustServerCertificate=True;integrated security=false;");
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("Server=135.125.207.90;database=db_weshare;user id=admin_weshare;password=WeSh@r33;trusted_connection=true;TrustServerCertificate=True;integrated security=false;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<Action>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__Actions__3214EC275D616C54");
+
+            entity.Property(e => e.Id).HasColumnName("ID");
+            entity.Property(e => e.ActionType)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.AdminId).HasColumnName("AdminID");
+            entity.Property(e => e.Description)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+
+            entity.HasOne(d => d.Admin).WithMany(p => p.Actions)
+                .HasForeignKey(d => d.AdminId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__Actions__AdminID__489AC854");
+        });
+
         modelBuilder.Entity<Admin>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Admin__3214EC27F4245E80");
+            entity.HasKey(e => e.Id).HasName("PK__Admin__3214EC271E58DE10");
 
             entity.ToTable("Admin");
 
@@ -62,44 +84,43 @@ public partial class WeshareContext : DbContext
 
         modelBuilder.Entity<DeactivatedUser>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Deactiva__3214EC27D9D8388F");
+            entity.HasKey(e => e.Id).HasName("PK__Deactiva__3214EC271A0FF465");
 
             entity.ToTable("DeactivatedUser");
 
             entity.Property(e => e.Id).HasColumnName("ID");
-            entity.Property(e => e.Until).HasColumnType("datetime");
             entity.Property(e => e.UserId).HasColumnName("UserID");
 
             entity.HasOne(d => d.User).WithMany(p => p.DeactivatedUsers)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Deactivat__UserI__37703C52");
+                .HasConstraintName("FK__Deactivat__UserI__5AB9788F");
         });
 
         modelBuilder.Entity<Friendship>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Friendsh__3214EC27BC07BB65");
+            entity.HasKey(e => e.Id).HasName("PK__Friendsh__3214EC2710A26913");
 
             entity.ToTable("Friendship");
 
             entity.Property(e => e.Id).HasColumnName("ID");
-            entity.Property(e => e.User1Id).HasColumnName("User1ID");
-            entity.Property(e => e.User2Id).HasColumnName("User2ID");
+            entity.Property(e => e.FriendId).HasColumnName("FriendID");
+            entity.Property(e => e.UserId).HasColumnName("UserID");
 
-            entity.HasOne(d => d.User1).WithMany(p => p.FriendshipUser1s)
-                .HasForeignKey(d => d.User1Id)
+            entity.HasOne(d => d.Friend).WithMany(p => p.FriendshipFriends)
+                .HasForeignKey(d => d.FriendId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Friendshi__User1__2CF2ADDF");
+                .HasConstraintName("FK__Friendshi__Frien__51300E55");
 
-            entity.HasOne(d => d.User2).WithMany(p => p.FriendshipUser2s)
-                .HasForeignKey(d => d.User2Id)
+            entity.HasOne(d => d.User).WithMany(p => p.FriendshipUsers)
+                .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Friendshi__User2__2DE6D218");
+                .HasConstraintName("FK__Friendshi__UserI__503BEA1C");
         });
 
         modelBuilder.Entity<Group>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Group__3214EC27F05C23EF");
+            entity.HasKey(e => e.Id).HasName("PK__Group__3214EC27A892CC06");
 
             entity.ToTable("Group");
 
@@ -112,7 +133,7 @@ public partial class WeshareContext : DbContext
 
         modelBuilder.Entity<Invite>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Invite__3214EC271845F6DD");
+            entity.HasKey(e => e.Id).HasName("PK__Invite__3214EC2732CF28B3");
 
             entity.ToTable("Invite");
 
@@ -124,38 +145,41 @@ public partial class WeshareContext : DbContext
             entity.HasOne(d => d.Group).WithMany(p => p.Invites)
                 .HasForeignKey(d => d.GroupId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Invite__GroupID__3493CFA7");
+                .HasConstraintName("FK__Invite__GroupID__57DD0BE4");
 
             entity.HasOne(d => d.Receiver).WithMany(p => p.InviteReceivers)
                 .HasForeignKey(d => d.ReceiverId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Invite__Receiver__32AB8735");
+                .HasConstraintName("FK__Invite__Receiver__55F4C372");
 
             entity.HasOne(d => d.Sender).WithMany(p => p.InviteSenders)
                 .HasForeignKey(d => d.SenderId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Invite__SenderID__339FAB6E");
+                .HasConstraintName("FK__Invite__SenderID__56E8E7AB");
         });
 
         modelBuilder.Entity<Payment>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Payment__3214EC2794089977");
+            entity.HasKey(e => e.Id).HasName("PK__Payment__3214EC274CDA4A00");
 
             entity.ToTable("Payment");
 
             entity.Property(e => e.Id).HasColumnName("ID");
             entity.Property(e => e.Date).HasColumnType("datetime");
+            entity.Property(e => e.Title)
+                .HasMaxLength(50)
+                .IsUnicode(false);
             entity.Property(e => e.UserToGroupId).HasColumnName("UserToGroupID");
 
             entity.HasOne(d => d.UserToGroup).WithMany(p => p.Payments)
                 .HasForeignKey(d => d.UserToGroupId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Payment__UserToG__40F9A68C");
+                .HasConstraintName("FK__Payment__UserToG__6442E2C9");
         });
 
         modelBuilder.Entity<Receipt>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Receipt__3214EC27D32637D6");
+            entity.HasKey(e => e.Id).HasName("PK__Receipt__3214EC27A3F7D64F");
 
             entity.ToTable("Receipt");
 
@@ -166,12 +190,12 @@ public partial class WeshareContext : DbContext
             entity.HasOne(d => d.UserToGroup).WithMany(p => p.Receipts)
                 .HasForeignKey(d => d.UserToGroupId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Receipt__UserToG__3E1D39E1");
+                .HasConstraintName("FK__Receipt__UserToG__6166761E");
         });
 
         modelBuilder.Entity<ToBePaid>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__ToBePaid__3214EC27E93EE9ED");
+            entity.HasKey(e => e.Id).HasName("PK__ToBePaid__3214EC2776A3D671");
 
             entity.ToTable("ToBePaid");
 
@@ -182,12 +206,12 @@ public partial class WeshareContext : DbContext
             entity.HasOne(d => d.UserToGroup).WithMany(p => p.ToBePaids)
                 .HasForeignKey(d => d.UserToGroupId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__ToBePaid__UserTo__43D61337");
+                .HasConstraintName("FK__ToBePaid__UserTo__671F4F74");
         });
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__User__3214EC27E97B566B");
+            entity.HasKey(e => e.Id).HasName("PK__User__3214EC27458933DA");
 
             entity.ToTable("User");
 
@@ -208,7 +232,7 @@ public partial class WeshareContext : DbContext
 
         modelBuilder.Entity<UserToGroup>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__UserToGr__3214EC270D7C09BE");
+            entity.HasKey(e => e.Id).HasName("PK__UserToGr__3214EC2778305742");
 
             entity.ToTable("UserToGroup");
 
@@ -219,17 +243,17 @@ public partial class WeshareContext : DbContext
             entity.HasOne(d => d.Group).WithMany(p => p.UserToGroups)
                 .HasForeignKey(d => d.GroupId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__UserToGro__Group__3B40CD36");
+                .HasConstraintName("FK__UserToGro__Group__5E8A0973");
 
             entity.HasOne(d => d.User).WithMany(p => p.UserToGroups)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__UserToGro__UserI__3A4CA8FD");
+                .HasConstraintName("FK__UserToGro__UserI__5D95E53A");
         });
 
         modelBuilder.Entity<Wallet>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Wallet__3214EC276B4A9BEE");
+            entity.HasKey(e => e.Id).HasName("PK__Wallet__3214EC27ECB31225");
 
             entity.ToTable("Wallet");
 
@@ -239,7 +263,7 @@ public partial class WeshareContext : DbContext
             entity.HasOne(d => d.User).WithMany(p => p.Wallets)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Wallet__UserID__2A164134");
+                .HasConstraintName("FK__Wallet__UserID__4D5F7D71");
         });
 
         OnModelCreatingPartial(modelBuilder);

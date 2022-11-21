@@ -187,21 +187,24 @@ public class Controller : ControllerBase
     /// <param name="groupId"></param>
     /// <param name="amount"></param>
     [HttpPost(nameof(InsertPayment) + "{userId}/{groupId}/{amount}")]
-    public void InsertPayment(int userId, int groupId, double amount)
+    public void InsertPayment(int userId, int groupId, string title, double amount)
     {
         var userToGroupId = GetUserToGroupId(userId, groupId);
         if (userToGroupId == 0) return;
         _context.Payments.Add(new Payment
         {
             UserToGroupId = userToGroupId,
-            Amount = amount,
+			Title = title,
+			Amount = amount,
             Date = DateTime.Now
         });
         // Deduct from wallet
         var wallet = (from w in _context.Wallets
             where w.UserId == userId
             select w).FirstOrDefault();
-        wallet.Balance -= amount;
+		if (wallet == null) return;
+		
+		wallet.Balance -= amount;
         _context.SaveChanges();
     }
 
@@ -216,7 +219,7 @@ public class Controller : ControllerBase
     public IEnumerable<Friendship> GetFriendships(int userId)
     {
         return from f in _context.Friendships
-            where f.User1Id == userId
+            where f.UserId == userId
             select f;
     }
 
@@ -228,10 +231,15 @@ public class Controller : ControllerBase
     [HttpPost(nameof(InsertFriendship) + "{userId}/{friendId}")]
     public void InsertFriendship(int userId, int friendId)
     {
-        _context.Friendships.Add(new Friendship
+        var friendship = from f in _context.Friendships 
+                         where f.UserId == userId && f.FriendId == friendId 
+                         select f;
+		if (friendship.Any()) return;
+
+		_context.Friendships.Add(new Friendship
         {
-            User1Id = userId,
-            User2Id = friendId
+            UserId = userId,
+            FriendId = friendId
         });
         _context.SaveChanges();
     }
@@ -246,7 +254,7 @@ public class Controller : ControllerBase
     public void DeleteFriendship(int userId, int friendId)
     {
         var friendship = (from f in _context.Friendships
-            where f.User1Id == userId && f.User2Id == friendId
+            where f.UserId == userId && f.FriendId == friendId
             select f).FirstOrDefault();
         if (friendship == null) return;
         _context.Friendships.Remove(friendship);
@@ -347,7 +355,7 @@ public class Controller : ControllerBase
     {
         var invite = (from i in _context.Invites
             where i.ReceiverId == receiverId && i.GroupId == groupId
-            select i).Cast<Invite>().First();
+            select i).First();
         if (invite == null) return;
         _context.Invites.Remove(invite);
         _context.SaveChanges();
@@ -395,8 +403,7 @@ public class Controller : ControllerBase
     {
         if (!_context.UserToGroups.Any(u => u.UserId == userId && u.GroupId == groupId && u.IsOwner))
             return;
-        if (_context.ToBePaids.Any(t =>
-                t.UserToGroupId == _context.UserToGroups.First(u => u.UserId == userId && u.GroupId == groupId).Id))
+        if (_context.ToBePaids.Any(t => t.UserToGroupId == _context.UserToGroups.First(u => u.UserId == userId && u.GroupId == groupId).Id))
             return;
         foreach (var userToGroupId in _context.UserToGroups.Where(u => u.GroupId == groupId).Select(u => u.Id))
             _context.ToBePaids.Add(new ToBePaid
@@ -601,15 +608,15 @@ public class Controller : ControllerBase
     ///     Deactivates a user until a given date.
     /// </summary>
     /// <param name="userId"></param>
-    /// <param name="until"></param>
-    [HttpPut(nameof(DeactivateUser) + "{userId}/{until}")]
-    public void DeactivateUser(int userId, DateTime until)
+    /// <param name="byAdmin"></param>
+    [HttpPut(nameof(DeactivateUser) + "{userId}/{byAdmin}")]
+    public void DeactivateUser(int userId, bool byAdmin)
     {
         if (_context.DeactivatedUsers.Any(du => du.UserId == userId)) return;
         _context.DeactivatedUsers.Add(new DeactivatedUser
         {
             UserId = userId,
-            Until = until
+            ByAdmin = byAdmin
         });
         _context.SaveChanges();
     }

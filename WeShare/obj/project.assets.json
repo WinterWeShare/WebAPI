@@ -3727,11 +3727,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Marpond\\source\\repos\\ProjectWeShare\\WeShare\\WebAPI.csproj",
+      "projectUniqueName": "C:\\Users\\Marpond\\Source\\Repos\\WebAPI\\WeShare\\WebAPI.csproj",
       "projectName": "WebAPI",
-      "projectPath": "C:\\Users\\Marpond\\source\\repos\\ProjectWeShare\\WeShare\\WebAPI.csproj",
+      "projectPath": "C:\\Users\\Marpond\\Source\\Repos\\WebAPI\\WeShare\\WebAPI.csproj",
       "packagesPath": "C:\\Users\\Marpond\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Marpond\\source\\repos\\ProjectWeShare\\WeShare\\obj\\",
+      "outputPath": "C:\\Users\\Marpond\\Source\\Repos\\WebAPI\\WeShare\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\Marpond\\AppData\\Roaming\\NuGet\\NuGet.Config",

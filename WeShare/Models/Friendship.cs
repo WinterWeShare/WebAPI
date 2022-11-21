@@ -1,14 +1,17 @@
-﻿namespace WebAPI.Models;
+﻿using System;
+using System.Collections.Generic;
 
-public class Friendship
+namespace WebAPI.Models;
+
+public partial class Friendship
 {
     public int Id { get; set; }
 
-    public int User1Id { get; set; }
+    public int UserId { get; set; }
 
-    public int User2Id { get; set; }
+    public int FriendId { get; set; }
 
-    public virtual User User1 { get; set; } = null!;
+    public virtual User Friend { get; set; } = null!;
 
-    public virtual User User2 { get; set; } = null!;
+    public virtual User User { get; set; } = null!;
 }

@@ -1,6 +1,9 @@
-﻿namespace WebAPI.Models;
+﻿using System;
+using System.Collections.Generic;
 
-public class User
+namespace WebAPI.Models;
+
+public partial class User
 {
     public int Id { get; set; }
 
@@ -14,9 +17,9 @@ public class User
 
     public virtual ICollection<DeactivatedUser> DeactivatedUsers { get; } = new List<DeactivatedUser>();
 
-    public virtual ICollection<Friendship> FriendshipUser1s { get; } = new List<Friendship>();
+    public virtual ICollection<Friendship> FriendshipFriends { get; } = new List<Friendship>();
 
-    public virtual ICollection<Friendship> FriendshipUser2s { get; } = new List<Friendship>();
+    public virtual ICollection<Friendship> FriendshipUsers { get; } = new List<Friendship>();
 
     public virtual ICollection<Invite> InviteReceivers { get; } = new List<Invite>();
 
