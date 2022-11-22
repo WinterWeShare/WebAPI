@@ -47,7 +47,7 @@ public class Controller : ControllerBase
     public IEnumerable<string> GetDeactivatedUserEmails()
     {
         return from user in _context.Users
-            where _context.DeactivatedUsers.Any(deactivatedUser => deactivatedUser.UserId == user.Id)
+            where _context.DeactivatedUsers.Any(du => du.UserId == user.Id)
             select user.Email;
     }
 
@@ -180,13 +180,14 @@ public class Controller : ControllerBase
             select payment;
     }
 
-    /// <summary>
-    ///     Makes a payment for a user in a group.
-    /// </summary>
-    /// <param name="userId"></param>
-    /// <param name="groupId"></param>
-    /// <param name="amount"></param>
-    [HttpPost(nameof(InsertPayment) + "{userId}/{groupId}/{amount}")]
+	/// <summary>
+	///     Makes a payment for a user in a group.
+	/// </summary>
+	/// <param name="userId"></param>
+	/// <param name="groupId"></param>
+	/// <param name="title"></param>
+	/// <param name="amount"></param>
+	[HttpPost(nameof(InsertPayment) + "{userId}/{groupId}/{title}/{amount}")]
     public void InsertPayment(int userId, int groupId, string title, double amount)
     {
         var userToGroupId = GetUserToGroupId(userId, groupId);

@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "UejvFuTmg8lZEbL2Uk5261vptEhkfKxWXRFk0bixn6f9atUIWz3ULtcm0zmvks+RC3Y/PP4M11tl657ppEbh8Q==",
+  "dgSpecHash": "nHPlJacGc1LQHReEwjqrj1vHVMFNa2k3tu2R2x0cG8b8++xDHUoMbr8EX41YzGkWedhp1KM6HDBpS0y0vdtjAg==",
   "success": true,
-  "projectFilePath": "C:\\Users\\Marpond\\Source\\Repos\\WebAPI\\WeShare\\WebAPI.csproj",
+  "projectFilePath": "C:\\Users\\Marpond\\source\\repos\\WebAPI\\WeShare\\WebAPI.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Marpond\\.nuget\\packages\\azure.core\\1.24.0\\azure.core.1.24.0.nupkg.sha512",
     "C:\\Users\\Marpond\\.nuget\\packages\\azure.identity\\1.6.0\\azure.identity.1.6.0.nupkg.sha512",

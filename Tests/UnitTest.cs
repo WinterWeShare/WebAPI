@@ -5,7 +5,7 @@ using WebAPI.Controllers;
 namespace Tests
 {
 	[TestClass]
-	public class UnitTest1
+	public class UnitTest
 	{
 		Controller controller = new();
 		
