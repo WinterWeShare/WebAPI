@@ -19,7 +19,7 @@ namespace Tests
 		[TestMethod]
 		public void TestMethod1()
 		{
-			controller.GetUserEmails().ToList().ForEach(s => Debug.Print(s));
+			controller.IsUserExist().ToList().ForEach(s => Debug.Print(s));
 		}
 	}
 }

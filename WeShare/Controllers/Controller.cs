@@ -24,32 +24,35 @@ public class Controller : ControllerBase
             select utg.Id;
     }
 
-    /// <summary>
-    ///     Gets all user emails from the database.
-    /// </summary>
-    /// <returns>
-    ///     A List of all user emails.
-    /// </returns>
-    [HttpGet(nameof(GetUserEmails))]
-    public IEnumerable<string> GetUserEmails()
+	/// <summary>
+	///     Checks if the user is deactivated.
+	/// </summary>
+    /// <param name="userId"/>
+	/// <returns>
+	///     A bool value representing if the user exists.
+	/// </returns>
+	[HttpGet(nameof(IsUserExist) + "{userId}")]
+	public IEnumerable<bool> IsUserExist(int userId)
     {
-        return from user in _context.Users
-            select user.Email;
+        yield return (from u in _context.Users
+                      where u.Id == userId
+                      select u).FirstOrDefault() is not null;
     }
 
-    /// <summary>
-    ///     Gets all deactivated user emails from the database.
-    /// </summary>
-    /// <returns>
-    ///     A List of all deactivated user emails.
-    /// </returns>
-    [HttpGet(nameof(GetDeactivatedUserEmails))]
-    public IEnumerable<string> GetDeactivatedUserEmails()
+	/// <summary>
+	///     Checks if the user is deactivated.
+	/// </summary>
+    /// <param name="userId"/>
+	/// <returns>
+	///     A bool value representing if the value is deactivated
+	/// </returns>
+	[HttpGet(nameof(IsUserDeactivated) + "{userId}")]
+	public IEnumerable<bool> IsUserDeactivated(int userId)
     {
-        return from user in _context.Users
-            where _context.DeactivatedUsers.Any(du => du.UserId == user.Id)
-            select user.Email;
-    }
+        yield return (from u in _context.DeactivatedUsers
+				   where u.Id == userId
+				select u).FirstOrDefault() is not null;
+	}
 
     /// <summary>
     ///     Gets a user from the database.
