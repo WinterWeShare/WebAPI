@@ -19,7 +19,6 @@ namespace Tests
 		[TestMethod]
 		public void TestMethod1()
 		{
-			controller.IsUserExist().ToList().ForEach(s => Debug.Print(s));
 		}
 	}
 }

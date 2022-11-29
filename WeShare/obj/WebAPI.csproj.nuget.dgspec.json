@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Marpond\\source\\repos\\WebAPI\\WeShare\\WebAPI.csproj": {}
+    "C:\\Users\\Marcell\\RiderProjects\\WebAPI\\WeShare\\WebAPI.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Marpond\\source\\repos\\WebAPI\\WeShare\\WebAPI.csproj": {
+    "C:\\Users\\Marcell\\RiderProjects\\WebAPI\\WeShare\\WebAPI.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Marpond\\source\\repos\\WebAPI\\WeShare\\WebAPI.csproj",
+        "projectUniqueName": "C:\\Users\\Marcell\\RiderProjects\\WebAPI\\WeShare\\WebAPI.csproj",
         "projectName": "WebAPI",
-        "projectPath": "C:\\Users\\Marpond\\source\\repos\\WebAPI\\WeShare\\WebAPI.csproj",
-        "packagesPath": "C:\\Users\\Marpond\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Marpond\\source\\repos\\WebAPI\\WeShare\\obj\\",
+        "projectPath": "C:\\Users\\Marcell\\RiderProjects\\WebAPI\\WeShare\\WebAPI.csproj",
+        "packagesPath": "C:\\Users\\Marcell\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Marcell\\RiderProjects\\WebAPI\\WeShare\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\Marpond\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Marcell\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
