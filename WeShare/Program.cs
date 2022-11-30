@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using WebAPI.Models;
@@ -17,7 +18,7 @@ namespace WebAPI
 			// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 			builder.Services.AddEndpointsApiExplorer();
 			builder.Services.AddSwaggerGen();
-			
+
 			builder.Services.AddDbContext<WeshareContext>(options =>
 			{
 			    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));

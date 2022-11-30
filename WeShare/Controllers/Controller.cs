@@ -9,6 +9,12 @@ public class Controller : ControllerBase
 {
     private readonly WeshareContext _context = new();
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="groupId"></param>
+    /// <returns></returns>
     private int GetUserToGroupId(int userId, int groupId)
     {
         var userToGroup = (from utg in _context.UserToGroups
@@ -17,6 +23,11 @@ public class Controller : ControllerBase
         return userToGroup?.Id ?? 0;
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="groupId"></param>
+    /// <returns></returns>
     private IEnumerable<int> GetUserToGroupIdsByGroupId(int groupId)
     {
         return from utg in _context.UserToGroups
@@ -25,7 +36,7 @@ public class Controller : ControllerBase
     }
 
 	/// <summary>
-	///     Checks if the user is deactivated.
+	///     Checks if the user exists.
 	/// </summary>
     /// <param name="userId"/>
 	/// <returns>
@@ -44,7 +55,7 @@ public class Controller : ControllerBase
 	/// </summary>
     /// <param name="userId"/>
 	/// <returns>
-	///     A bool value representing if the value is deactivated
+	///     A bool value representing if the user is deactivated
 	/// </returns>
 	[HttpGet(nameof(IsUserDeactivated) + "{userId}")]
 	public IEnumerable<bool> IsUserDeactivated(int userId)

@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Marcell\\RiderProjects\\WebAPI\\Tests\\Tests.csproj": {}
+    "C:\\Users\\Marpond\\RiderProjects\\WebAPI\\Tests\\Tests.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Marcell\\RiderProjects\\WebAPI\\Tests\\Tests.csproj": {
+    "C:\\Users\\Marpond\\RiderProjects\\WebAPI\\Tests\\Tests.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Marcell\\RiderProjects\\WebAPI\\Tests\\Tests.csproj",
+        "projectUniqueName": "C:\\Users\\Marpond\\RiderProjects\\WebAPI\\Tests\\Tests.csproj",
         "projectName": "Tests",
-        "projectPath": "C:\\Users\\Marcell\\RiderProjects\\WebAPI\\Tests\\Tests.csproj",
-        "packagesPath": "C:\\Users\\Marcell\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Marcell\\RiderProjects\\WebAPI\\Tests\\obj\\",
+        "projectPath": "C:\\Users\\Marpond\\RiderProjects\\WebAPI\\Tests\\Tests.csproj",
+        "packagesPath": "C:\\Users\\Marpond\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Marpond\\RiderProjects\\WebAPI\\Tests\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\Marcell\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Marpond\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -28,8 +28,8 @@
           "net6.0-windows7.0": {
             "targetAlias": "net6.0-windows",
             "projectReferences": {
-              "C:\\Users\\Marcell\\RiderProjects\\WebAPI\\WeShare\\WebAPI.csproj": {
-                "projectPath": "C:\\Users\\Marcell\\RiderProjects\\WebAPI\\WeShare\\WebAPI.csproj"
+              "C:\\Users\\Marpond\\RiderProjects\\WebAPI\\WeShare\\WebAPI.csproj": {
+                "projectPath": "C:\\Users\\Marpond\\RiderProjects\\WebAPI\\WeShare\\WebAPI.csproj"
               }
             }
           }
@@ -95,17 +95,17 @@
         }
       }
     },
-    "C:\\Users\\Marcell\\RiderProjects\\WebAPI\\WeShare\\WebAPI.csproj": {
+    "C:\\Users\\Marpond\\RiderProjects\\WebAPI\\WeShare\\WebAPI.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Marcell\\RiderProjects\\WebAPI\\WeShare\\WebAPI.csproj",
+        "projectUniqueName": "C:\\Users\\Marpond\\RiderProjects\\WebAPI\\WeShare\\WebAPI.csproj",
         "projectName": "WebAPI",
-        "projectPath": "C:\\Users\\Marcell\\RiderProjects\\WebAPI\\WeShare\\WebAPI.csproj",
-        "packagesPath": "C:\\Users\\Marcell\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Marcell\\RiderProjects\\WebAPI\\WeShare\\obj\\",
+        "projectPath": "C:\\Users\\Marpond\\RiderProjects\\WebAPI\\WeShare\\WebAPI.csproj",
+        "packagesPath": "C:\\Users\\Marpond\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Marpond\\RiderProjects\\WebAPI\\WeShare\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\Marcell\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Marpond\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
