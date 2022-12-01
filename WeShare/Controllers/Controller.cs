@@ -117,6 +117,23 @@ public class Controller : ControllerBase
             PhoneNumber = phoneNumber
         });
         _context.SaveChanges();
+        
+        InsertWallet(GetUserId(email).First());
+    }
+    
+    /// <summary>
+    ///     Inserts a wallet of a random amount of money for a user.
+    /// </summary>
+    /// <param name="userId"></param>
+    private void InsertWallet(int userId)
+    {
+        if (_context.Wallets.Any(w => w.UserId == userId)) return;
+        _context.Wallets.Add(new Wallet
+        {
+            UserId = userId,
+            Balance = new Random().Next(5000, 25000)
+        });
+        _context.SaveChanges();
     }
 
     /// <summary>
@@ -644,22 +661,6 @@ public class Controller : ControllerBase
     }
 
 
-    /// <summary>
-    ///     Inserts a wallet of a random amount of money for a user.
-    /// </summary>
-    /// <param name="userId"></param>
-    [HttpPost]
-    [Route(nameof(InsertWallet) + "/{userId}")]
-    public void InsertWallet(int userId)
-    {
-        if (_context.Wallets.Any(w => w.UserId == userId)) return;
-        _context.Wallets.Add(new Wallet
-        {
-            UserId = userId,
-            Balance = new Random().Next(5000, 25000)
-        });
-        _context.SaveChanges();
-    }
 
     /// <summary>
     ///     Gets the balance of a user.
