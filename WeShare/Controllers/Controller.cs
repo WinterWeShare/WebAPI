@@ -32,6 +32,22 @@ public class Controller : ControllerBase
             where utg.GroupId == groupId
             select utg.Id;
     }
+    
+    /// <summary>
+    ///     Gets an id of an user by their email
+    /// </summary>
+    /// <param name="email"></param>
+    /// <returns>
+    ///    The id of the user.
+    /// </returns>
+    [HttpGet]
+    [Route(nameof(GetUserId) + "/{email}")]
+    public IEnumerable<int> GetUserId(string email)
+    {
+        return from u in _context.Users
+            where u.Email == email
+            select u.Id;
+    }
 
     /// <summary>
     ///     Checks if the user exists.
@@ -40,8 +56,9 @@ public class Controller : ControllerBase
     /// <returns>
     ///     A bool value representing if the user exists.
     /// </returns>
-    [HttpGet(nameof(IsUserExist) + "{userId}")]
-    public IEnumerable<bool> IsUserExist(int userId)
+    [HttpGet]
+    [Route(nameof(IsUserExists) + "/{userId}")]
+    public IEnumerable<bool> IsUserExists(int userId)
     {
         yield return (from u in _context.Users
             where u.Id == userId
@@ -55,7 +72,8 @@ public class Controller : ControllerBase
     /// <returns>
     ///     A bool value representing if the user is deactivated
     /// </returns>
-    [HttpGet(nameof(IsUserDeactivated) + "{userId}")]
+    [HttpGet]
+    [Route(nameof(IsUserDeactivated) + "/{userId}")]
     public IEnumerable<bool> IsUserDeactivated(int userId)
     {
         yield return (from u in _context.DeactivatedUsers
@@ -70,7 +88,8 @@ public class Controller : ControllerBase
     /// <returns>
     ///     A User object.
     /// </returns>
-    [HttpGet(nameof(GetUser) + "{userId}")]
+    [HttpGet]
+    [Route(nameof(GetUser) + "/{userId}")]
     public IEnumerable<User> GetUser(int userId)
     {
         return from user in _context.Users
@@ -85,7 +104,8 @@ public class Controller : ControllerBase
     /// <param name="firstName"></param>
     /// <param name="lastName"></param>
     /// <param name="phoneNumber"></param>
-    [HttpPost(nameof(InsertUser) + "{email}/{firstName}/{lastName}/{phoneNumber}")]
+    [HttpPost]
+    [Route(nameof(InsertUser) + "/{email}/{firstName}/{lastName}/{phoneNumber}")]
     public void InsertUser(string email, string firstName, string lastName, string phoneNumber)
     {
         _context.Users.Add(new User
@@ -106,7 +126,8 @@ public class Controller : ControllerBase
     /// <param name="firstName"></param>
     /// <param name="lastName"></param>
     /// <param name="phoneNumber"></param>
-    [HttpPut(nameof(UpdateUser) + "{userId}/{email}/{firstName}/{lastName}/{phoneNumber}")]
+    [HttpPut]
+    [Route(nameof(UpdateUser) + "/{userId}/{email}/{firstName}/{lastName}/{phoneNumber}")]
     public void UpdateUser(int userId, string email, string firstName, string lastName, string phoneNumber)
     {
         var user = (from u in _context.Users
@@ -127,7 +148,8 @@ public class Controller : ControllerBase
     /// <returns>
     ///     A list of groups.
     /// </returns>
-    [HttpGet(nameof(GetGroups) + "{userId}")]
+    [HttpGet]
+    [Route(nameof(GetGroups) + "/{userId}")]
     public IEnumerable<Group> GetGroups(int userId)
     {
         return from g in _context.Groups
@@ -143,7 +165,8 @@ public class Controller : ControllerBase
     /// </summary>
     /// <param name="userId"></param>
     /// <param name="groupName"></param>
-    [HttpPost(nameof(InsertGroup) + "{userId}/{groupName}")]
+    [HttpPost]
+    [Route(nameof(InsertGroup) + "/{userId}/{groupName}")]
     public void InsertGroup(int userId, string groupName)
     {
         _context.Groups.Add(new Group
@@ -170,7 +193,8 @@ public class Controller : ControllerBase
     /// <returns>
     ///     A List of all payments of a user in a group.
     /// </returns>
-    [HttpGet(nameof(GetUserPayments) + "{userId}/{groupId}")]
+    [HttpGet]
+    [Route(nameof(GetUserPayments) + "/{userId}/{groupId}")]
     public IEnumerable<Payment> GetUserPayments(int userId, int groupId)
     {
         var userToGroupId = GetUserToGroupId(userId, groupId);
@@ -184,7 +208,8 @@ public class Controller : ControllerBase
     /// </summary>
     /// <param name="groupId"></param>
     /// <returns></returns>
-    [HttpGet(nameof(GetGroupPayments) + "{groupId}")]
+    [HttpGet]
+    [Route(nameof(GetGroupPayments) + "/{groupId}")]
     public IEnumerable<Payment> GetGroupPayments(int groupId)
     {
         return from payment in _context.Payments
@@ -193,13 +218,14 @@ public class Controller : ControllerBase
     }
 
     /// <summary>
-    ///     Makes a payment for a user in a group.
+    ///     Inserts a payment for a user in a group.
     /// </summary>
     /// <param name="userId"></param>
     /// <param name="groupId"></param>
     /// <param name="title"></param>
     /// <param name="amount"></param>
-    [HttpPost(nameof(InsertPayment) + "{userId}/{groupId}/{title}/{amount}")]
+    [HttpPost]
+    [Route(nameof(InsertPayment) + "/{userId}/{groupId}/{title}/{amount}")]
     public void InsertPayment(int userId, int groupId, string title, double amount)
     {
         var userToGroupId = GetUserToGroupId(userId, groupId);
@@ -222,13 +248,14 @@ public class Controller : ControllerBase
     }
 
     /// <summary>
-    ///     Gets all the friends of a user.
+    ///     Gets all the friendships of a user.
     /// </summary>
     /// <param name="userId"></param>
     /// <returns>
     ///     A List of all the friends of a user.
     /// </returns>
-    [HttpGet(nameof(GetFriendships) + "{userId}")]
+    [HttpGet]
+    [Route(nameof(GetFriendships) + "/{userId}")]
     public IEnumerable<Friendship> GetFriendships(int userId)
     {
         return from f in _context.Friendships
@@ -241,7 +268,8 @@ public class Controller : ControllerBase
     /// </summary>
     /// <param name="userId"></param>
     /// <param name="friendId"></param>
-    [HttpPost(nameof(InsertFriendship) + "{userId}/{friendId}")]
+    [HttpPost]
+    [Route(nameof(InsertFriendship) + "/{userId}/{friendId}")]
     public void InsertFriendship(int userId, int friendId)
     {
         var friendship = from f in _context.Friendships
@@ -263,7 +291,8 @@ public class Controller : ControllerBase
     /// </summary>
     /// <param name="userId"></param>
     /// <param name="friendId"></param>
-    [HttpDelete(nameof(DeleteFriendship) + "{userId}/{friendId}")]
+    [HttpDelete]
+    [Route(nameof(DeleteFriendship) + "/{userId}/{friendId}")]
     public void DeleteFriendship(int userId, int friendId)
     {
         var friendship = (from f in _context.Friendships
@@ -281,7 +310,8 @@ public class Controller : ControllerBase
     /// <returns>
     ///     A list of group invitations.
     /// </returns>
-    [HttpGet(nameof(GetInvites) + "{userId}")]
+    [HttpGet]
+    [Route(nameof(GetInvites) + "/{userId}")]
     public IEnumerable<Invite> GetInvites(int userId)
     {
         return from i in _context.Invites
@@ -302,7 +332,8 @@ public class Controller : ControllerBase
     /// <param name="senderId"></param>
     /// <param name="receiverId"></param>
     /// <param name="groupId"></param>
-    [HttpPost(nameof(InsertInvite) + "{senderId}/{receiverId}/{groupId}")]
+    [HttpPost]
+    [Route(nameof(InsertInvite) + "/{senderId}/{receiverId}/{groupId}")]
     public void InsertInvite(int senderId, int receiverId, int groupId)
     {
         if (_context.UserToGroups.Any(u => u.UserId == receiverId && u.GroupId == groupId))
@@ -336,7 +367,8 @@ public class Controller : ControllerBase
     /// </summary>
     /// <param name="userId"></param>
     /// <param name="groupId"></param>
-    [HttpPut(nameof(AcceptInvite) + "{userId}/{groupId}")]
+    [HttpPut]
+    [Route(nameof(AcceptInvite) + "/{userId}/{groupId}")]
     public void AcceptInvite(int userId, int groupId)
     {
         var invite = (from i in _context.Invites
@@ -363,7 +395,8 @@ public class Controller : ControllerBase
     /// </summary>
     /// <param name="receiverId"></param>
     /// <param name="groupId"></param>
-    [HttpDelete(nameof(DeleteInvite) + "{receiverId}/{groupId}")]
+    [HttpDelete]
+    [Route(nameof(DeleteInvite) + "/{receiverId}/{groupId}")]
     public void DeleteInvite(int receiverId, int groupId)
     {
         var invite = (from i in _context.Invites
@@ -381,7 +414,8 @@ public class Controller : ControllerBase
     /// <returns>
     ///     A list of to be paids.
     /// </returns>
-    [HttpGet(nameof(GetGroupToBePaids) + "{groupId}")]
+    [HttpGet]
+    [Route(nameof(GetGroupToBePaids) + "/{groupId}")]
     public IEnumerable<ToBePaid> GetGroupToBePaids(int groupId)
     {
         return from tbp in _context.ToBePaids
@@ -397,7 +431,8 @@ public class Controller : ControllerBase
     /// <returns>
     ///     A to be paid.
     /// </returns>
-    [HttpGet(nameof(GetUserToBePaid) + "{userId}/{groupId}")]
+    [HttpGet]
+    [Route(nameof(GetUserToBePaid) + "/{userId}/{groupId}")]
     public IEnumerable<ToBePaid> GetUserToBePaid(int userId, int groupId)
     {
         var userToGroupId = GetUserToGroupId(userId, groupId);
@@ -411,7 +446,8 @@ public class Controller : ControllerBase
     /// </summary>
     /// <param name="groupId"></param>
     /// <param name="userId"></param>
-    [HttpPost(nameof(InsertToBePaid) + "{groupId}/{userId}")]
+    [HttpPost]
+    [Route(nameof(InsertToBePaid) + "/{groupId}/{userId}")]
     public void InsertToBePaid(int groupId, int userId)
     {
         if (!_context.UserToGroups.Any(u => u.UserId == userId && u.GroupId == groupId && u.IsOwner))
@@ -439,7 +475,8 @@ public class Controller : ControllerBase
     /// </summary>
     /// <param name="userId"></param>
     /// <param name="groupId"></param>
-    [HttpPut(nameof(ApproveToBePaid) + "{userId}/{groupId}")]
+    [HttpPut]
+    [Route(nameof(ApproveToBePaid) + "/{userId}/{groupId}")]
     public void ApproveToBePaid(int groupId, int userId)
     {
         var userToGroupId = GetUserToGroupId(userId, groupId);
@@ -462,7 +499,8 @@ public class Controller : ControllerBase
     /// </summary>
     /// <param name="groupId"></param>
     /// <param name="userId"></param>
-    [HttpDelete(nameof(DeleteToBePaid) + "{groupId}/{userId}")]
+    [HttpDelete]
+    [Route(nameof(DeleteToBePaid) + "/{groupId}/{userId}")]
     public void DeleteToBePaid(int groupId, int userId)
     {
         var userToGroupId = GetUserToGroupId(userId, groupId);
@@ -523,8 +561,9 @@ public class Controller : ControllerBase
     /// <returns>
     ///     The receipt for a user in a group.
     /// </returns>
-    [HttpGet(nameof(GetUserGroupReceipt) + "{userId}/{groupId}")]
-    public IEnumerable<Receipt> GetUserGroupReceipt(int userId, int groupId)
+    [HttpGet]
+    [Route(nameof(GetReceipt) + "/{userId}/{groupId}")]
+    public IEnumerable<Receipt> GetReceipt(int userId, int groupId)
     {
         var userToGroupId = GetUserToGroupId(userId, groupId);
         return from receipt in _context.Receipts
@@ -579,7 +618,8 @@ public class Controller : ControllerBase
     /// <param name="groupId"></param>
     /// <param name="userId"></param>
     /// <param name="userToRemoveId"></param>
-    [HttpDelete(nameof(DeleteUserFromGroup) + "{groupId}/{userId}/{userToRemoveId}")]
+    [HttpDelete]
+    [Route(nameof(DeleteUserFromGroup) + "/{groupId}/{userId}/{userToRemoveId}")]
     public void DeleteUserFromGroup(int groupId, int userId, int userToRemoveId)
     {
         var userToGroupId = GetUserToGroupId(userId, groupId);
@@ -603,10 +643,11 @@ public class Controller : ControllerBase
 
 
     /// <summary>
-    ///     Creates a wallet of a random amount of money for a user.
+    ///     Inserts a wallet of a random amount of money for a user.
     /// </summary>
     /// <param name="userId"></param>
-    [HttpPost(nameof(InsertWallet) + "{userId}")]
+    [HttpPost]
+    [Route(nameof(InsertWallet) + "/{userId}")]
     public void InsertWallet(int userId)
     {
         if (_context.Wallets.Any(w => w.UserId == userId)) return;
@@ -617,13 +658,30 @@ public class Controller : ControllerBase
         });
         _context.SaveChanges();
     }
+    
+    /// <summary>
+    ///     Gets the balance of a user.
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <returns>
+    ///     The balance of a user.
+    /// </returns>
+    [HttpGet]
+    [Route(nameof(GetBalance) + "/{userId}")]
+    public IEnumerable<double> GetBalance(int userId)
+    {
+        return from w in _context.Wallets
+            where w.UserId == userId
+            select w.Balance;
+    }
 
     /// <summary>
     ///     Deactivates a user until a given date.
     /// </summary>
     /// <param name="userId"></param>
     /// <param name="byAdmin"></param>
-    [HttpPut(nameof(DeactivateUser) + "{userId}/{byAdmin}")]
+    [HttpPut]
+    [Route(nameof(DeactivateUser) + "/{userId}/{byAdmin}")]
     public void DeactivateUser(int userId, bool byAdmin)
     {
         if (_context.DeactivatedUsers.Any(du => du.UserId == userId)) return;
@@ -639,7 +697,8 @@ public class Controller : ControllerBase
     ///     Activates a user.
     /// </summary>
     /// <param name="userId"></param>
-    [HttpPut(nameof(ActivateUser) + "{userId}")]
+    [HttpPut]
+    [Route(nameof(ActivateUser) + "/{userId}")]
     public void ActivateUser(int userId)
     {
         var user = (from u in _context.DeactivatedUsers
