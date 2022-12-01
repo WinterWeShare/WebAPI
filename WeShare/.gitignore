@@ -7,3 +7,4 @@
 out
 gen
 appsettings.json
+appsettings.Production.json
