@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using WebAPI.Models;
+using Action = WebAPI.Models.Action;
 
 namespace WebAPI.Controllers;
 
@@ -7,7 +8,7 @@ namespace WebAPI.Controllers;
 [Route("[controller]")]
 public class Controller : ControllerBase
 {
-    private readonly WeshareContext _context = new();
+    private readonly DbWeshareContext _context = new();
 
     /// <summary>
     /// </summary>
@@ -32,13 +33,13 @@ public class Controller : ControllerBase
             where utg.GroupId == groupId
             select utg.Id;
     }
-    
+
     /// <summary>
     ///     Gets an id of an user by their email
     /// </summary>
     /// <param name="email"></param>
     /// <returns>
-    ///    The id of the user.
+    ///     The id of the user.
     /// </returns>
     [HttpGet]
     [Route(nameof(GetUserId) + "/{email}")]
@@ -572,11 +573,12 @@ public class Controller : ControllerBase
     }
 
     /// <summary>
-    ///     Pays a receipt by deducting the amount from the user's balance and marking the receipt as fulfilled.
+    ///     Fulfills a receipt by deducting the amount from the user's balance and marking the receipt as fulfilled.
     /// </summary>
     /// <param name="userId"></param>
     /// <param name="groupId"></param>
-    [HttpPut(nameof(FulfillReceipt) + "{userId}/{groupId}")]
+    [HttpPut]
+    [Route(nameof(FulfillReceipt) + "/{userId}/{groupId}")]
     public void FulfillReceipt(int groupId, int userId)
     {
         var userToGroupId = GetUserToGroupId(userId, groupId);
@@ -658,7 +660,7 @@ public class Controller : ControllerBase
         });
         _context.SaveChanges();
     }
-    
+
     /// <summary>
     ///     Gets the balance of a user.
     /// </summary>
@@ -706,6 +708,26 @@ public class Controller : ControllerBase
             select u).FirstOrDefault();
         if (user == null) return;
         _context.DeactivatedUsers.Remove(user);
+        _context.SaveChanges();
+    }
+
+    /// <summary>
+    ///     Inserts an action made by an admin.
+    /// </summary>
+    /// <param name="actionType"></param>
+    /// <param name="description"></param>
+    /// <param name="adminId"></param>
+    [HttpPost]
+    [Route(nameof(InsertAction) + "/{actionType}/{description}/{adminId}")]
+    public void InsertAction(string actionType, string description, int adminId)
+    {
+        _context.Actions.Add(new Action
+        {
+            ActionType = actionType,
+            Description = description,
+            AdminId = adminId,
+            Date = DateTime.Now
+        });
         _context.SaveChanges();
     }
 }

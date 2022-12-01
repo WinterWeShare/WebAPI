@@ -10,5 +10,7 @@ public class Action
 
     public int AdminId { get; set; }
 
+    public DateTime Date { get; set; }
+
     public virtual Admin Admin { get; set; } = null!;
 }
