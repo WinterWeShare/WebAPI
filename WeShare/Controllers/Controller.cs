@@ -10,7 +10,6 @@ public class Controller : ControllerBase
     private readonly WeshareContext _context = new();
 
     /// <summary>
-    /// 
     /// </summary>
     /// <param name="userId"></param>
     /// <param name="groupId"></param>
@@ -24,7 +23,6 @@ public class Controller : ControllerBase
     }
 
     /// <summary>
-    /// 
     /// </summary>
     /// <param name="groupId"></param>
     /// <returns></returns>
@@ -35,35 +33,35 @@ public class Controller : ControllerBase
             select utg.Id;
     }
 
-	/// <summary>
-	///     Checks if the user exists.
-	/// </summary>
-    /// <param name="userId"/>
-	/// <returns>
-	///     A bool value representing if the user exists.
-	/// </returns>
-	[HttpGet(nameof(IsUserExist) + "{userId}")]
-	public IEnumerable<bool> IsUserExist(int userId)
+    /// <summary>
+    ///     Checks if the user exists.
+    /// </summary>
+    /// <param name="userId" />
+    /// <returns>
+    ///     A bool value representing if the user exists.
+    /// </returns>
+    [HttpGet(nameof(IsUserExist) + "{userId}")]
+    public IEnumerable<bool> IsUserExist(int userId)
     {
         yield return (from u in _context.Users
-                      where u.Id == userId
-                      select u).FirstOrDefault() is not null;
+            where u.Id == userId
+            select u).FirstOrDefault() is not null;
     }
 
-	/// <summary>
-	///     Checks if the user is deactivated.
-	/// </summary>
-    /// <param name="userId"/>
-	/// <returns>
-	///     A bool value representing if the user is deactivated
-	/// </returns>
-	[HttpGet(nameof(IsUserDeactivated) + "{userId}")]
-	public IEnumerable<bool> IsUserDeactivated(int userId)
+    /// <summary>
+    ///     Checks if the user is deactivated.
+    /// </summary>
+    /// <param name="userId" />
+    /// <returns>
+    ///     A bool value representing if the user is deactivated
+    /// </returns>
+    [HttpGet(nameof(IsUserDeactivated) + "{userId}")]
+    public IEnumerable<bool> IsUserDeactivated(int userId)
     {
         yield return (from u in _context.DeactivatedUsers
-				   where u.Id == userId
-				select u).FirstOrDefault() is not null;
-	}
+            where u.Id == userId
+            select u).FirstOrDefault() is not null;
+    }
 
     /// <summary>
     ///     Gets a user from the database.
@@ -194,14 +192,14 @@ public class Controller : ControllerBase
             select payment;
     }
 
-	/// <summary>
-	///     Makes a payment for a user in a group.
-	/// </summary>
-	/// <param name="userId"></param>
-	/// <param name="groupId"></param>
-	/// <param name="title"></param>
-	/// <param name="amount"></param>
-	[HttpPost(nameof(InsertPayment) + "{userId}/{groupId}/{title}/{amount}")]
+    /// <summary>
+    ///     Makes a payment for a user in a group.
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="groupId"></param>
+    /// <param name="title"></param>
+    /// <param name="amount"></param>
+    [HttpPost(nameof(InsertPayment) + "{userId}/{groupId}/{title}/{amount}")]
     public void InsertPayment(int userId, int groupId, string title, double amount)
     {
         var userToGroupId = GetUserToGroupId(userId, groupId);
@@ -209,17 +207,17 @@ public class Controller : ControllerBase
         _context.Payments.Add(new Payment
         {
             UserToGroupId = userToGroupId,
-			Title = title,
-			Amount = amount,
+            Title = title,
+            Amount = amount,
             Date = DateTime.Now
         });
         // Deduct from wallet
         var wallet = (from w in _context.Wallets
             where w.UserId == userId
             select w).FirstOrDefault();
-		if (wallet == null) return;
-		
-		wallet.Balance -= amount;
+        if (wallet == null) return;
+
+        wallet.Balance -= amount;
         _context.SaveChanges();
     }
 
@@ -246,12 +244,12 @@ public class Controller : ControllerBase
     [HttpPost(nameof(InsertFriendship) + "{userId}/{friendId}")]
     public void InsertFriendship(int userId, int friendId)
     {
-        var friendship = from f in _context.Friendships 
-                         where f.UserId == userId && f.FriendId == friendId 
-                         select f;
-		if (friendship.Any()) return;
+        var friendship = from f in _context.Friendships
+            where f.UserId == userId && f.FriendId == friendId
+            select f;
+        if (friendship.Any()) return;
 
-		_context.Friendships.Add(new Friendship
+        _context.Friendships.Add(new Friendship
         {
             UserId = userId,
             FriendId = friendId
@@ -418,7 +416,8 @@ public class Controller : ControllerBase
     {
         if (!_context.UserToGroups.Any(u => u.UserId == userId && u.GroupId == groupId && u.IsOwner))
             return;
-        if (_context.ToBePaids.Any(t => t.UserToGroupId == _context.UserToGroups.First(u => u.UserId == userId && u.GroupId == groupId).Id))
+        if (_context.ToBePaids.Any(t =>
+                t.UserToGroupId == _context.UserToGroups.First(u => u.UserId == userId && u.GroupId == groupId).Id))
             return;
         foreach (var userToGroupId in _context.UserToGroups.Where(u => u.GroupId == groupId).Select(u => u.Id))
             _context.ToBePaids.Add(new ToBePaid

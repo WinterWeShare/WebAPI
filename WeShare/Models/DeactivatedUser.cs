@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿namespace WebAPI.Models;
 
-namespace WebAPI.Models;
-
-public partial class DeactivatedUser
+public class DeactivatedUser
 {
     public int Id { get; set; }
 

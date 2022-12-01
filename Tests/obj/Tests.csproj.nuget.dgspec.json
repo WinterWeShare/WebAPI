@@ -1,35 +1,33 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Marpond\\RiderProjects\\WebAPI\\Tests\\Tests.csproj": {}
+    "/home/marpond/RiderProjects/WebAPI/Tests/Tests.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Marpond\\RiderProjects\\WebAPI\\Tests\\Tests.csproj": {
+    "/home/marpond/RiderProjects/WebAPI/Tests/Tests.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Marpond\\RiderProjects\\WebAPI\\Tests\\Tests.csproj",
+        "projectUniqueName": "/home/marpond/RiderProjects/WebAPI/Tests/Tests.csproj",
         "projectName": "Tests",
-        "projectPath": "C:\\Users\\Marpond\\RiderProjects\\WebAPI\\Tests\\Tests.csproj",
-        "packagesPath": "C:\\Users\\Marpond\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Marpond\\RiderProjects\\WebAPI\\Tests\\obj\\",
+        "projectPath": "/home/marpond/RiderProjects/WebAPI/Tests/Tests.csproj",
+        "packagesPath": "/home/marpond/.nuget/packages/",
+        "outputPath": "/home/marpond/RiderProjects/WebAPI/Tests/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\Marpond\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "/home/marpond/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net6.0-windows"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net6.0-windows7.0": {
             "targetAlias": "net6.0-windows",
             "projectReferences": {
-              "C:\\Users\\Marpond\\RiderProjects\\WebAPI\\WeShare\\WebAPI.csproj": {
-                "projectPath": "C:\\Users\\Marpond\\RiderProjects\\WebAPI\\WeShare\\WebAPI.csproj"
+              "/home/marpond/RiderProjects/WebAPI/WeShare/WebAPI.csproj": {
+                "projectPath": "/home/marpond/RiderProjects/WebAPI/WeShare/WebAPI.csproj"
               }
             }
           }
@@ -81,8 +79,7 @@
             "net47",
             "net471",
             "net472",
-            "net48",
-            "net481"
+            "net48"
           ],
           "assetTargetFallback": true,
           "warn": true,
@@ -91,28 +88,26 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.100\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/lib64/dotnet/sdk/6.0.111/RuntimeIdentifierGraph.json"
         }
       }
     },
-    "C:\\Users\\Marpond\\RiderProjects\\WebAPI\\WeShare\\WebAPI.csproj": {
+    "/home/marpond/RiderProjects/WebAPI/WeShare/WebAPI.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Marpond\\RiderProjects\\WebAPI\\WeShare\\WebAPI.csproj",
+        "projectUniqueName": "/home/marpond/RiderProjects/WebAPI/WeShare/WebAPI.csproj",
         "projectName": "WebAPI",
-        "projectPath": "C:\\Users\\Marpond\\RiderProjects\\WebAPI\\WeShare\\WebAPI.csproj",
-        "packagesPath": "C:\\Users\\Marpond\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Marpond\\RiderProjects\\WebAPI\\WeShare\\obj\\",
+        "projectPath": "/home/marpond/RiderProjects/WebAPI/WeShare/WebAPI.csproj",
+        "packagesPath": "/home/marpond/.nuget/packages/",
+        "outputPath": "/home/marpond/RiderProjects/WebAPI/WeShare/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\Marpond\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "/home/marpond/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net6.0-windows"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -152,8 +147,7 @@
             "net47",
             "net471",
             "net472",
-            "net48",
-            "net481"
+            "net48"
           ],
           "assetTargetFallback": true,
           "warn": true,
@@ -165,7 +159,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.100\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/lib64/dotnet/sdk/6.0.111/RuntimeIdentifierGraph.json"
         }
       }
     }

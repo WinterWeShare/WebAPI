@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿namespace WebAPI.Models;
 
-namespace WebAPI.Models;
-
-public partial class UserToGroup
+public class UserToGroup
 {
     public int Id { get; set; }
 

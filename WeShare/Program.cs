@@ -1,62 +1,58 @@
-using System.Diagnostics;
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using WebAPI.Models;
 
-namespace WebAPI
+namespace WebAPI;
+
+public class Program
 {
-	public class Program
-	{
-		public static void Main(string[] args)
-		{
+    public static void Main(string[] args)
+    {
+        var builder = WebApplication.CreateBuilder(args);
 
-			var builder = WebApplication.CreateBuilder(args);
-			
-			// Add services to the container.
-			
-			builder.Services.AddControllers();
-			// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-			builder.Services.AddEndpointsApiExplorer();
-			builder.Services.AddSwaggerGen();
+        // Add services to the container.
 
-			builder.Services.AddDbContext<WeshareContext>(options =>
-			{
-			    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
-			});
-			
-			builder.Services.AddControllers().AddJsonOptions(options =>
-			{
-			    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-			});
+        builder.Services.AddControllers();
+        // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSwaggerGen();
 
-			builder.Services.AddCors(policyBuilder =>
-			policyBuilder.AddDefaultPolicy(policy =>
-				{
-				policy.AllowAnyOrigin();
-				policy.AllowAnyHeader();
-				policy.AllowAnyMethod();
-				}
-				)
-			);
+        builder.Services.AddDbContext<WeshareContext>(options =>
+        {
+            options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+        });
 
-			var app = builder.Build();
+        builder.Services.AddControllers().AddJsonOptions(options =>
+        {
+            options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        });
 
-			// Configure the HTTP request pipeline.
-			if (app.Environment.IsDevelopment())
-			{
-				app.UseSwagger();
-				app.UseSwaggerUI();
-			}
+        builder.Services.AddCors(policyBuilder =>
+            policyBuilder.AddDefaultPolicy(policy =>
+                {
+                    policy.AllowAnyOrigin();
+                    policy.AllowAnyHeader();
+                    policy.AllowAnyMethod();
+                }
+            )
+        );
 
-			//app.UseHttpsRedirection();
+        var app = builder.Build();
 
-			app.UseCors();
-			app.UseAuthorization();
+        // Configure the HTTP request pipeline.
+        if (app.Environment.IsDevelopment())
+        {
+            app.UseSwagger();
+            app.UseSwaggerUI();
+        }
 
-			app.MapControllers();
+        //app.UseHttpsRedirection();
 
-			app.Run();
+        app.UseCors();
+        app.UseAuthorization();
 
-		}
-	}
+        app.MapControllers();
+
+        app.Run();
+    }
 }

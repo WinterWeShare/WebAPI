@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿namespace WebAPI.Models;
 
-namespace WebAPI.Models;
-
-public partial class Wallet
+public class Wallet
 {
     public int Id { get; set; }
 
