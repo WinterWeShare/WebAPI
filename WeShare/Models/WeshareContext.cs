@@ -40,7 +40,7 @@ public partial class DbWeshareContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        var projectPath = AppDomain.CurrentDomain.BaseDirectory.Split(new[] { @"bin\" }, StringSplitOptions.None)[0];
+        var projectPath = Environment.CurrentDirectory;
         var configuration = new ConfigurationBuilder()
             .SetBasePath(projectPath)
             .AddJsonFile("appsettings.json")
