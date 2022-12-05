@@ -49,6 +49,23 @@ public class Controller : ControllerBase
             where u.Email == email
             select u.Id;
     }
+    
+    /// <summary>
+    ///     Gets the name of a user by their userToGroupId
+    /// </summary>
+    /// <param name="userToGroupId"></param>
+    /// <returns>
+    ///     The name of the user.
+    /// </returns>
+    [HttpGet]
+    [Route(nameof(GetUserNameByUserToGroupId) + "/{userToGroupId}")]
+    public IEnumerable<string> GetUserNameByUserToGroupId(int userToGroupId)
+    {
+        return from utg in _context.UserToGroups
+            join u in _context.Users on utg.UserId equals u.Id
+            where utg.Id == userToGroupId
+            select $"{u.FirstName} {u.LastName}";
+    }
 
     /// <summary>
     ///     Checks if the user exists.
@@ -64,6 +81,24 @@ public class Controller : ControllerBase
         yield return (from u in _context.Users
             where u.Id == userId
             select u).FirstOrDefault() is not null;
+    }
+    
+    /// <summary>
+    ///     Gets if a user is the owner of a group.
+    /// </summary>
+    /// <param name="userId" />
+    /// <param name="groupId" />
+    /// <returns>
+    ///     A bool value representing if the user is the owner of the group.
+    /// </returns>
+    [HttpGet]
+    [Route(nameof(IsUserOwner) + "/{userId}/{groupId}")]
+    public IEnumerable<bool> IsUserOwner(int userId, int groupId)
+    {
+        yield return (from g in _context.Groups
+            join utg in _context.UserToGroups on g.Id equals utg.GroupId
+            where g.Id == groupId && utg.UserId == userId && utg.IsOwner
+                select g).FirstOrDefault() is not null;
     }
 
     /// <summary>
