@@ -97,6 +97,24 @@ public class Controller : ControllerBase
             where user.Id == userId
             select user;
     }
+    
+    /// <summary>
+    ///     Gets all the users in a group.
+    /// </summary>
+    /// <param name="groupId"></param>
+    /// <returns>
+    ///     A list of users.
+    /// </returns>
+    [HttpGet]
+    [Route(nameof(GetUsers) + "/{groupId}")]
+    public IEnumerable<User> GetUsers(int groupId)
+    {
+        return from u in _context.Users
+            join utg in _context.UserToGroups
+                on u.Id equals utg.UserId
+            where utg.GroupId == groupId
+            select u;
+    }
 
     /// <summary>
     ///     Inserts a new user in the database.
