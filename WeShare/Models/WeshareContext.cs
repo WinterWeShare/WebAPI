@@ -48,6 +48,7 @@ public partial class DbWeshareContext : DbContext
         var connectionString = configuration.GetConnectionString("WeShare")!;
         optionsBuilder.UseSqlServer(connectionString);
     }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Action>(entity =>
@@ -97,9 +98,9 @@ public partial class DbWeshareContext : DbContext
             entity.Property(e => e.Id).HasColumnName("ID");
             entity.Property(e => e.UserId).HasColumnName("UserID");
 
-            RelationalForeignKeyBuilderExtensions.HasConstraintName((ReferenceCollectionBuilder)entity.HasOne(d => d.User).WithMany(p => p.DeactivatedUsers)
+            ((ReferenceCollectionBuilder)entity.HasOne(d => d.User).WithMany(p => p.DeactivatedUsers)
                 .HasForeignKey(d => d.UserId)
-                .OnDelete(DeleteBehavior.ClientSetNull), "FK__Deactivat__UserI__38996AB5");
+                .OnDelete(DeleteBehavior.ClientSetNull)).HasConstraintName("FK__Deactivat__UserI__38996AB5");
         });
 
         modelBuilder.Entity<Friendship>(entity =>

@@ -49,7 +49,7 @@ public class Controller : ControllerBase
             where u.Email == email
             select u.Id;
     }
-    
+
     /// <summary>
     ///     Gets the name of a user by their userToGroupId
     /// </summary>
@@ -82,7 +82,7 @@ public class Controller : ControllerBase
             where u.Id == userId
             select u).FirstOrDefault() is not null;
     }
-    
+
     /// <summary>
     ///     Gets if a user is the owner of a group.
     /// </summary>
@@ -98,7 +98,7 @@ public class Controller : ControllerBase
         yield return (from g in _context.Groups
             join utg in _context.UserToGroups on g.Id equals utg.GroupId
             where g.Id == groupId && utg.UserId == userId && utg.IsOwner
-                select g).FirstOrDefault() is not null;
+            select g).FirstOrDefault() is not null;
     }
 
     /// <summary>
@@ -132,7 +132,7 @@ public class Controller : ControllerBase
             where user.Id == userId
             select user;
     }
-    
+
     /// <summary>
     ///     Gets all the users in a group.
     /// </summary>
@@ -165,8 +165,9 @@ public class Controller : ControllerBase
         var user = from u in _context.Users
             where u.Email == email || u.PhoneNumber == phoneNumber
             select u;
-        if (user is not null) throw new Exception($"User with email {email} or phone number {phoneNumber} already exists.");
-        
+        if (user is not null)
+            throw new Exception($"User with email {email} or phone number {phoneNumber} already exists.");
+
         _context.Users.Add(new User
         {
             Email = email,
@@ -175,10 +176,10 @@ public class Controller : ControllerBase
             PhoneNumber = phoneNumber
         });
         _context.SaveChanges();
-        
+
         InsertWallet(GetUserId(email).First());
     }
-    
+
     /// <summary>
     ///     Inserts a wallet of a random amount of money for a user.
     /// </summary>
@@ -209,7 +210,7 @@ public class Controller : ControllerBase
             where u.Id == userId
             select u).FirstOrDefault();
         if (user is null) throw new Exception($"User with id {userId} does not exist.");
-        
+
         user.Email = email;
         user.FirstName = firstName;
         user.LastName = lastName;
@@ -307,7 +308,7 @@ public class Controller : ControllerBase
         var userToGroupId = GetUserToGroupId(userId, groupId);
         if (userToGroupId == 0)
             throw new Exception($"User {userId} is not in group {groupId}.");
-        
+
         _context.Payments.Add(new Payment
         {
             UserToGroupId = userToGroupId,
@@ -319,8 +320,8 @@ public class Controller : ControllerBase
         var wallet = (from w in _context.Wallets
             where w.UserId == userId
             select w).FirstOrDefault();
-        
-        if (wallet is null) 
+
+        if (wallet is null)
             throw new Exception($"No wallet found for user {userId}");
         if (wallet.Balance < amount)
             throw new Exception($"Not enough money in wallet for user {userId}");
@@ -357,7 +358,8 @@ public class Controller : ControllerBase
         var friendship = from f in _context.Friendships
             where f.UserId == userId && f.FriendId == friendId
             select f;
-        if (friendship.Any()) throw new Exception($"Friendship between user {userId} and user {friendId} already exists.");
+        if (friendship.Any())
+            throw new Exception($"Friendship between user {userId} and user {friendId} already exists.");
 
         _context.Friendships.Add(new Friendship
         {
@@ -380,8 +382,9 @@ public class Controller : ControllerBase
         var friendship = (from f in _context.Friendships
             where f.UserId == userId && f.FriendId == friendId
             select f).FirstOrDefault();
-        if (friendship is null) throw new Exception($"Friendship between user {userId} and user {friendId} does not exist.");
-        
+        if (friendship is null)
+            throw new Exception($"Friendship between user {userId} and user {friendId} does not exist.");
+
         _context.Friendships.Remove(friendship);
         _context.SaveChanges();
     }
@@ -424,7 +427,7 @@ public class Controller : ControllerBase
         if (_context.Invites.Any(i => i.SenderId == senderId && i.ReceiverId == receiverId && i.GroupId == groupId))
             throw new Exception($"User {receiverId} has already been invited to group {groupId}.");
         if (_context.DeactivatedUsers.Any(u => u.UserId == receiverId))
-            throw new Exception($"User {receiverId} is deactivated."); 
+            throw new Exception($"User {receiverId} is deactivated.");
         if (_context.Groups.Any(g => g.Id == groupId && g.Closed))
             throw new Exception($"Group {groupId} is closed.");
         if (_context.ToBePaids.Any(t => GetUserToGroupIdsByGroupId(groupId).Contains(t.UserToGroupId)))
@@ -489,7 +492,7 @@ public class Controller : ControllerBase
             where i.ReceiverId == receiverId && i.GroupId == groupId
             select i).FirstOrDefault();
         if (invite is null) throw new Exception($"Invite for user {receiverId} to group {groupId} does not exist.");
-        
+
         _context.Invites.Remove(invite);
         _context.SaveChanges();
     }
@@ -538,17 +541,17 @@ public class Controller : ControllerBase
     public void InsertToBePaid(int groupId, int userId)
     {
         var userToGroupIds = GetUserToGroupIdsByGroupId(groupId);
-        
+
         var isOwner = from utg in _context.UserToGroups
             where utg.UserId == userId && utg.GroupId == groupId
             select utg.IsOwner;
         if (!isOwner.First()) throw new Exception($"User {userId} is not the owner of group {groupId}.");
-        
+
         var isToBePaid = from tbp in _context.ToBePaids
             where userToGroupIds.Contains(tbp.UserToGroupId)
             select tbp;
         if (isToBePaid.Any()) throw new Exception($"Group {groupId} is already marked ToBePaid.");
-        
+
         foreach (var userToGroupId in userToGroupIds)
             _context.ToBePaids.Add(new ToBePaid
             {
@@ -578,12 +581,12 @@ public class Controller : ControllerBase
             throw new Exception($"User {userId} is not in group {groupId}.");
 
         var toBePaid = _context.ToBePaids.FirstOrDefault(t => t.UserToGroupId == userToGroupId);
-        if (toBePaid is null) 
+        if (toBePaid is null)
             throw new Exception($"User {userId} is not marked ToBePaid in group {groupId}.");
-        
-        if (toBePaid.Approved) 
+
+        if (toBePaid.Approved)
             throw new Exception($"User {userId} already approved ToBePaid in group {groupId}.");
-        
+
         toBePaid.Approved = true;
         toBePaid.Date = DateTime.Now;
         _context.SaveChanges();
@@ -609,7 +612,7 @@ public class Controller : ControllerBase
         // If the user is not the owner of the group
         if (!_context.UserToGroups.Any(u => u.UserId == userId && u.GroupId == groupId && u.IsOwner))
             throw new Exception($"User {userId} is not the owner of group {groupId}.");
-        
+
         // If all ToBePaid values are approved for the group
         var userToGroupIds = GetUserToGroupIdsByGroupId(groupId);
         if (_context.ToBePaids.Where(t => userToGroupIds.Contains(t.UserToGroupId)).All(t => t.Approved))
@@ -635,14 +638,13 @@ public class Controller : ControllerBase
         // Get every payment for each user even if the user didn't pay anything.
         var payments = _context.Payments.Where(p => userToGroupIds.Contains(p.UserToGroupId)).ToList();
         // If payments does not contain a payment for a user, add it with amount 0.
-        foreach (var userToGroupId in userToGroupIds.Where(userToGroupId => payments.All(p => p.UserToGroupId != userToGroupId)))
-        {
+        foreach (var userToGroupId in userToGroupIds.Where(userToGroupId =>
+                     payments.All(p => p.UserToGroupId != userToGroupId)))
             payments.Add(new Payment
             {
                 Amount = 0,
                 UserToGroupId = userToGroupId
             });
-        }
 
         // Get the amount that each user has paid.
         foreach (var utg in userToGroupIds)
@@ -655,6 +657,7 @@ public class Controller : ControllerBase
                 Fulfilled = false
             });
         }
+
         _context.SaveChanges();
     }
 
@@ -703,7 +706,7 @@ public class Controller : ControllerBase
 
         if (wallet.Balance < receipt.Amount)
             throw new Exception($"User {userId} does not have enough money in their wallet.");
-        
+
         // += because if someone owes money, the amount is negative.
         wallet.Balance += receipt.Amount;
         receipt.Date = DateTime.Now;
@@ -740,7 +743,9 @@ public class Controller : ControllerBase
         if (_context.Receipts.Any(r => r.UserToGroupId == userToGroupId) || // if the user has a receipt in the group
             _context.Payments.Any(p => p.UserToGroupId == userToGroupId) || // if the user has a payment in the group
             _context.ToBePaids.Any(t => t.UserToGroupId == userToGroupId) || // if the user has a ToBePaid in the group
-            !_context.UserToGroups.Any(utg => utg.GroupId == groupId && utg.UserId == userId && utg.IsOwner) || // if the user who wants to remove someone is not the owner
+            !_context.UserToGroups.Any(utg =>
+                utg.GroupId == groupId && utg.UserId == userId &&
+                utg.IsOwner) || // if the user who wants to remove someone is not the owner
             _context.Groups.Any(g => g.Id == groupId && g.Closed)) // if the group is closed
             throw new Exception($"User {userId} cannot remove user {userToRemoveId} from group {groupId}.");
 
@@ -749,11 +754,10 @@ public class Controller : ControllerBase
             select utg;
         if (userToRemove is null)
             throw new Exception($"User {userToRemoveId} is not in group {groupId}.");
-        
+
         _context.UserToGroups.Remove(userToRemove.First());
         _context.SaveChanges();
     }
-
 
 
     /// <summary>
@@ -782,7 +786,7 @@ public class Controller : ControllerBase
     {
         if (_context.DeactivatedUsers.Any(du => du.UserId == userId))
             throw new Exception($"User {userId} is already deactivated.");
-        
+
         _context.DeactivatedUsers.Add(new DeactivatedUser
         {
             UserId = userId,
@@ -804,10 +808,10 @@ public class Controller : ControllerBase
             select u).FirstOrDefault();
         if (user is null)
             throw new Exception($"User {userId} is not deactivated.");
-        
+
         if (user.ByAdmin)
             throw new Exception($"User {userId} is deactivated by an admin and cannot activate themselves.");
-        
+
         _context.DeactivatedUsers.Remove(user);
         _context.SaveChanges();
     }
@@ -829,12 +833,12 @@ public class Controller : ControllerBase
             ByAdmin = true,
             UserId = userId
         });
-        
+
         InsertAction("Put", $"Deactivated user {userId}", adminId);
-        
+
         _context.SaveChanges();
     }
-    
+
     /// <summary>
     ///     Activates a user by an admin.
     /// </summary>
@@ -849,23 +853,23 @@ public class Controller : ControllerBase
             select u).FirstOrDefault();
         if (user is null)
             throw new Exception($"User {userId} is not deactivated.");
-        
+
         _context.DeactivatedUsers.Remove(user);
-        
+
         InsertAction("Put", $"Activated user {userId}", adminId);
-        
+
         _context.SaveChanges();
     }
 
-        /// <summary>
+    /// <summary>
     ///     Inserts an action made by an admin.
     /// </summary>
     /// <param name="actionType"></param>
     /// <param name="description"></param>
     /// <param name="adminId"></param>
     [HttpPost]
-    [Route(nameof(InsertAction) + "/{actionType}/{description}/{adminId}")] 
-        public void InsertAction(string actionType, string description, int adminId)
+    [Route(nameof(InsertAction) + "/{actionType}/{description}/{adminId}")]
+    public void InsertAction(string actionType, string description, int adminId)
     {
         _context.Actions.Add(new Action
         {
@@ -876,7 +880,7 @@ public class Controller : ControllerBase
         });
         _context.SaveChanges();
     }
-        
+
     /// <summary>
     ///     Gets all actions made by an admin.
     /// </summary>
