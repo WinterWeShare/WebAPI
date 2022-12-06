@@ -404,6 +404,28 @@ public class Controller : ControllerBase
             where i.ReceiverId == userId
             select i;
     }
+    
+    /// <summary>
+    ///     Returns a list of all invitable friends for a user in a group.
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="groupId"></param>
+    /// <returns>
+    ///     A list of all invitable friends for a user in a group.
+    /// </returns>
+    [HttpGet]
+    [Route(nameof(GetInvitableFriends) + "/{userId}/{groupId}")]
+    public IEnumerable<User> GetInvitableFriends(int userId, int groupId)
+    {
+        var invitableFriends = from u in _context.Users 
+            join f in _context.Friendships on u.Id equals f.FriendId 
+            where f.UserId == userId
+            join utg in _context.UserToGroups on u.Id equals utg.UserId into utgJoin
+            from utg in utgJoin.DefaultIfEmpty()
+            where utg == null || utg.GroupId != groupId
+            select u;
+        return invitableFriends;
+    }
 
     /// <summary>
     ///     Inserts a new group invite in the database.
