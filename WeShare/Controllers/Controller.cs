@@ -8,7 +8,7 @@ namespace WebAPI.Controllers;
 [Route("[controller]")]
 public class Controller : ControllerBase
 {
-    private readonly DbWeshareContext _context = new();
+    private DbWeshareContext _context = new();
 
     /// <summary>
     /// </summary>
@@ -48,23 +48,6 @@ public class Controller : ControllerBase
         return from u in _context.Users
             where u.Email == email
             select u.Id;
-    }
-
-    /// <summary>
-    ///     Gets the name of a user by their userToGroupId
-    /// </summary>
-    /// <param name="userToGroupId"></param>
-    /// <returns>
-    ///     The name of the user.
-    /// </returns>
-    [HttpGet]
-    [Route(nameof(GetUserNameByUserToGroupId) + "/{userToGroupId}")]
-    public IEnumerable<string> GetUserNameByUserToGroupId(int userToGroupId)
-    {
-        return from utg in _context.UserToGroups
-            join u in _context.Users on utg.UserId equals u.Id
-            where utg.Id == userToGroupId
-            select $"{u.FirstName} {u.LastName}";
     }
 
     /// <summary>
@@ -400,9 +383,24 @@ public class Controller : ControllerBase
     [Route(nameof(GetInvites) + "/{userId}")]
     public IEnumerable<Invite> GetInvites(int userId)
     {
-        return from i in _context.Invites
+        var invites = from i in _context.Invites
             where i.ReceiverId == userId
             select i;
+        foreach (var invite in invites)
+        {
+            _context = new DbWeshareContext();
+            // Set the Sender, Group and Receiver properties
+            invite.Sender = (from u in _context.Users
+                where u.Id == invite.SenderId
+                select u).FirstOrDefault()?? new User();
+            invite.Group = (from g in _context.Groups
+                where g.Id == invite.GroupId
+                select g).FirstOrDefault()?? new Group();
+            invite.Receiver = (from u in _context.Users
+                where u.Id == invite.ReceiverId
+                select u).FirstOrDefault()?? new User();
+        }
+        return invites;
     }
     
     /// <summary>
@@ -474,21 +472,21 @@ public class Controller : ControllerBase
     ///     - The group is not closed.
     ///     - The group is not marked ToBePaid.
     /// </summary>
-    /// <param name="userId"></param>
+    /// <param name="receiverId"></param>
     /// <param name="groupId"></param>
     [HttpPut]
-    [Route(nameof(AcceptInvite) + "/{userId}/{groupId}")]
-    public void AcceptInvite(int userId, int groupId)
+    [Route(nameof(AcceptInvite) + "/{receiverId}/{groupId}")]
+    public void AcceptInvite(int receiverId, int groupId)
     {
         var invite = (from i in _context.Invites
-            where i.ReceiverId == userId && i.GroupId == groupId
+            where i.ReceiverId == receiverId && i.GroupId == groupId
             select i).FirstOrDefault();
         if (invite is null)
-            throw new Exception($"User {userId} has not been invited to group {groupId}.");
+            throw new Exception($"User {receiverId} has not been invited to group {groupId}.");
         _context.Invites.Remove(invite);
 
-        if (GetUserToGroupId(userId, groupId) is not 0)
-            throw new Exception($"User {userId} is already in group {groupId}.");
+        if (GetUserToGroupId(receiverId, groupId) is not 0)
+            throw new Exception($"User {receiverId} is already in group {groupId}.");
         if (_context.Groups.Any(g => g.Id == groupId && g.Closed))
             throw new Exception($"Group {groupId} is closed.");
         if (_context.ToBePaids.Any(tbp => GetUserToGroupIdsByGroupId(groupId).Contains(tbp.UserToGroupId)))
@@ -496,7 +494,7 @@ public class Controller : ControllerBase
 
         _context.UserToGroups.Add(new UserToGroup
         {
-            UserId = userId,
+            UserId = receiverId,
             GroupId = groupId,
             IsOwner = false
         });
@@ -615,7 +613,7 @@ public class Controller : ControllerBase
         toBePaid.Date = DateTime.Now;
         _context.SaveChanges();
         // if all ToBePaid values are approved for the group
-        var userToGroupIds = _context.UserToGroups.Where(u => u.GroupId == groupId).Select(u => u.Id);
+        var userToGroupIds = GetUserToGroupIdsByGroupId(groupId);
         if (_context.ToBePaids.Where(t => userToGroupIds.Contains(t.UserToGroupId)).All(t => t.Approved))
             InsertReceipts(groupId);
     }
