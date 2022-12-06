@@ -99,6 +99,39 @@ public class Controller : ControllerBase
             where u.Id == userId
             select u).FirstOrDefault() is not null;
     }
+    
+    /// <summary>
+    ///     Checks if the user is in a group.
+    /// </summary>
+    /// <param name="userId" />
+    /// <param name="groupId" />
+    /// <returns>
+    ///     A bool value representing if the user is in the group.
+    /// </returns>
+    [HttpGet]
+    [Route(nameof(IsInGroup) + "/{userId}/{groupId}")]
+    public IEnumerable<bool> IsInGroup(int userId, int groupId)
+    {
+        yield return (from utg in _context.UserToGroups
+            where utg.UserId == userId && utg.GroupId == groupId
+            select utg).FirstOrDefault() is not null;
+    }
+    
+    /// <summary>
+    ///     Checks if a group is closed.
+    /// </summary>
+    /// <param name="groupId" />
+    /// <returns>
+    ///     A bool value representing if the group is closed.
+    /// </returns>
+    [HttpGet]
+    [Route(nameof(IsGroupClosed) + "/{groupId}")]
+    public IEnumerable<bool> IsGroupClosed(int groupId)
+    {
+        yield return (from g in _context.Groups
+            where g.Id == groupId && g.Closed
+            select g).FirstOrDefault() is not null;
+    }
 
     /// <summary>
     ///     Gets a user from the database.
@@ -586,7 +619,10 @@ public class Controller : ControllerBase
 
         // Remove all the invites for the group.
         foreach (var invite in _context.Invites.Where(i => i.GroupId == groupId))
-            DeleteInvite(invite.ReceiverId, invite.GroupId);
+        {
+            _context.Invites.Remove(invite);
+            _context.SaveChanges();
+        }
     }
 
     /// <summary>
@@ -617,34 +653,6 @@ public class Controller : ControllerBase
         if (_context.ToBePaids.Where(t => userToGroupIds.Contains(t.UserToGroupId)).All(t => t.Approved))
             InsertReceipts(groupId);
     }
-
-    /// <summary>
-    ///     Removes a group's ToBePaid values from the database.
-    /// </summary>
-    /// <param name="groupId"></param>
-    /// <param name="userId"></param>
-    [HttpDelete]
-    [Route(nameof(DeleteToBePaid) + "/{groupId}/{userId}")]
-    public void DeleteToBePaid(int groupId, int userId)
-    {
-        var userToGroupId = GetUserToGroupId(userId, groupId);
-        if (userToGroupId == 0)
-            throw new Exception($"User {userId} is not in group {groupId}.");
-
-        // If the user is not the owner of the group
-        if (!_context.UserToGroups.Any(u => u.UserId == userId && u.GroupId == groupId && u.IsOwner))
-            throw new Exception($"User {userId} is not the owner of group {groupId}.");
-
-        // If all ToBePaid values are approved for the group
-        var userToGroupIds = GetUserToGroupIdsByGroupId(groupId);
-        if (_context.ToBePaids.Where(t => userToGroupIds.Contains(t.UserToGroupId)).All(t => t.Approved))
-            throw new Exception($"Group {groupId} is already approved ToBePaid.");
-
-        userToGroupIds.ToList().ForEach(utg =>
-            _context.ToBePaids.Remove(_context.ToBePaids.First(t => t.UserToGroupId == utg)));
-        _context.SaveChanges();
-    }
-
 
     /// <summary>
     ///     Inserts receipts for a group.
@@ -682,6 +690,34 @@ public class Controller : ControllerBase
 
         _context.SaveChanges();
     }
+
+    /// <summary>
+    ///     Removes a group's ToBePaid values from the database.
+    /// </summary>
+    /// <param name="groupId"></param>
+    /// <param name="userId"></param>
+    [HttpDelete]
+    [Route(nameof(DeleteToBePaid) + "/{groupId}/{userId}")]
+    public void DeleteToBePaid(int groupId, int userId)
+    {
+        var userToGroupId = GetUserToGroupId(userId, groupId);
+        if (userToGroupId == 0)
+            throw new Exception($"User {userId} is not in group {groupId}.");
+
+        // If the user is not the owner of the group
+        if (!_context.UserToGroups.Any(u => u.UserId == userId && u.GroupId == groupId && u.IsOwner))
+            throw new Exception($"User {userId} is not the owner of group {groupId}.");
+
+        // If all ToBePaid values are approved for the group
+        var userToGroupIds = GetUserToGroupIdsByGroupId(groupId);
+        if (_context.ToBePaids.Where(t => userToGroupIds.Contains(t.UserToGroupId)).All(t => t.Approved))
+            throw new Exception($"Group {groupId} is already approved ToBePaid.");
+
+        userToGroupIds.ToList().ForEach(utg =>
+            _context.ToBePaids.Remove(_context.ToBePaids.First(t => t.UserToGroupId == utg)));
+        _context.SaveChanges();
+    }
+
 
     /// <summary>
     ///     Gets the receipt for a user in a group.
@@ -859,8 +895,6 @@ public class Controller : ControllerBase
             UserId = userId
         });
 
-        InsertAction("Put", $"Deactivated user {userId}", adminId);
-
         _context.SaveChanges();
     }
 
@@ -880,8 +914,6 @@ public class Controller : ControllerBase
             throw new Exception($"User {userId} is not deactivated.");
 
         _context.DeactivatedUsers.Remove(user);
-
-        InsertAction("Put", $"Activated user {userId}", adminId);
 
         _context.SaveChanges();
     }
@@ -919,5 +951,39 @@ public class Controller : ControllerBase
         return from a in _context.Actions
             where a.AdminId == adminId
             select a;
+    }
+    
+    /// <summary>
+    ///     Gets the total amount of money spent by a group.
+    /// </summary>
+    /// <param name="groupId"></param>
+    /// <returns>
+    ///     The total amount of money spent by a group.
+    /// </returns>
+    [HttpGet]
+    [Route(nameof(GetTotalSpent) + "/{groupId}")]
+    public IEnumerable<double> GetTotalSpent(int groupId)
+    {
+        yield return (from p in _context.Payments 
+            where GetUserToGroupIdsByGroupId(groupId).Contains(p.UserToGroupId)
+            select p.Amount).Sum();
+    }
+    
+    /// <summary>
+    ///     Gets the fair share of a group.
+    /// </summary>
+    /// <param name="groupId"></param>
+    /// <returns>
+    ///     The fair share of a group.
+    /// </returns>
+    [HttpGet]
+    [Route(nameof(GetFairShare) + "/{groupId}")]
+    public IEnumerable<double> GetFairShare(int groupId)
+    {
+        var totalSpent = (from p in _context.Payments 
+            where GetUserToGroupIdsByGroupId(groupId).Contains(p.UserToGroupId)
+            select p.Amount).Sum();
+        var numberOfUsers = GetUserToGroupIdsByGroupId(groupId).Count();
+        yield return totalSpent / numberOfUsers;
     }
 }
