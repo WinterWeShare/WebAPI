@@ -595,7 +595,7 @@ public class Controller : ControllerBase
     [Route(nameof(InsertToBePaid) + "/{groupId}/{userId}")]
     public void InsertToBePaid(int groupId, int userId)
     {
-        var userToGroupIds = GetUserToGroupIdsByGroupId(groupId);
+        var userToGroupIds = GetUserToGroupIdsByGroupId(groupId).ToList();
 
         var isOwner = from utg in _context.UserToGroups
             where utg.UserId == userId && utg.GroupId == groupId
@@ -607,14 +607,21 @@ public class Controller : ControllerBase
             select tbp;
         if (isToBePaid.Any()) throw new Exception($"Group {groupId} is already marked ToBePaid.");
 
-        foreach (var userToGroupId in userToGroupIds)
-            _context.ToBePaids.Add(new ToBePaid
-            {
-                UserToGroupId = userToGroupId,
-                Approved = false,
-                Date = null
-            });
-
+        _context.ToBePaids.Add(new ToBePaid
+        {
+            UserToGroupId = GetUserToGroupId(userId, groupId),
+            Approved = true,
+            Date = DateTime.Now
+        });
+        
+        userToGroupIds.Remove(GetUserToGroupId(userId, groupId));
+        _context.ToBePaids.AddRange(userToGroupIds.Select(userToGroupId => new ToBePaid
+        {
+            UserToGroupId = userToGroupId,
+            Approved = false,
+            Date = null
+        }));
+        
         _context.SaveChanges();
 
         // Remove all the invites for the group.
