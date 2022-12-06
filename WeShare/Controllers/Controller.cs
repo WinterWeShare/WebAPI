@@ -738,25 +738,28 @@ public class Controller : ControllerBase
     [Route(nameof(DeleteUserFromGroup) + "/{groupId}/{userId}/{userToRemoveId}")]
     public void DeleteUserFromGroup(int groupId, int userId, int userToRemoveId)
     {
-        var userToGroupId = GetUserToGroupId(userId, groupId);
-        if (userToGroupId == 0)
-            throw new Exception($"User {userId} is not in group {groupId}.");
+        var userToGroupId = GetUserToGroupId(userToRemoveId, groupId);
+        if (userToGroupId is 0)
+            throw new Exception($"User {userToRemoveId} is not in group {groupId}.");
+        
+        if (_context.Groups.Any(g => g.Id == groupId && g.Closed))
+            throw new Exception($"Cannot remove user {userToRemoveId} from group {groupId} because the group is closed.");
 
-        if (_context.Receipts.Any(r => r.UserToGroupId == userToGroupId) || // if the user has a receipt in the group
-            _context.Payments.Any(p => p.UserToGroupId == userToGroupId) || // if the user has a payment in the group
-            _context.ToBePaids.Any(t => t.UserToGroupId == userToGroupId) || // if the user has a ToBePaid in the group
-            !_context.UserToGroups.Any(utg =>
-                utg.GroupId == groupId && utg.UserId == userId &&
-                utg.IsOwner) || // if the user who wants to remove someone is not the owner
-            _context.Groups.Any(g => g.Id == groupId && g.Closed)) // if the group is closed
-            throw new Exception($"User {userId} cannot remove user {userToRemoveId} from group {groupId}.");
+        if (!_context.UserToGroups.Any(utg => utg.UserId == userId && utg.GroupId == groupId && utg.IsOwner))
+            throw new Exception($"Cannot remove user {userToRemoveId} from group {groupId} because user {userId} is not the owner.");
+        
+        if (_context.Receipts.Any(r => r.UserToGroupId == userToGroupId))
+            throw new Exception($"Cannot remove user {userToRemoveId} from group {groupId} because they have a receipt.");
+       
+        if (_context.ToBePaids.Any(t => t.UserToGroupId == userToGroupId))
+            throw new Exception($"Cannot remove user {userToRemoveId} from group {groupId} because the group is marked as to be paid.");
+        
+        if (_context.Payments.Any(p => p.UserToGroupId == userToGroupId))
+            throw new Exception($"Cannot remove user {userToRemoveId} from group {groupId} because they have a payment.");
 
         var userToRemove = from utg in _context.UserToGroups
-            where utg.GroupId == groupId && utg.UserId == userToRemoveId
+            where utg.Id == userToGroupId
             select utg;
-        if (userToRemove is null)
-            throw new Exception($"User {userToRemoveId} is not in group {groupId}.");
-
         _context.UserToGroups.Remove(userToRemove.First());
         _context.SaveChanges();
     }
