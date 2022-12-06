@@ -162,9 +162,9 @@ public class Controller : ControllerBase
     [Route(nameof(InsertUser) + "/{email}/{firstName}/{lastName}/{phoneNumber}")]
     public void InsertUser(string email, string firstName, string lastName, string phoneNumber)
     {
-        var user = from u in _context.Users
+        var user = (from u in _context.Users
             where u.Email == email || u.PhoneNumber == phoneNumber
-            select u;
+            select u).FirstOrDefault();
         if (user is not null)
             throw new Exception($"User with email {email} or phone number {phoneNumber} already exists.");
 
@@ -447,6 +447,7 @@ public class Controller : ControllerBase
     /// <summary>
     ///     Accepts a group invitation.
     ///     A user can only accept an invitation if:
+    ///     - The user was invited to the group.
     ///     - The user is not already in the group.
     ///     - The group is not closed.
     ///     - The group is not marked ToBePaid.
@@ -460,7 +461,8 @@ public class Controller : ControllerBase
         var invite = (from i in _context.Invites
             where i.ReceiverId == userId && i.GroupId == groupId
             select i).FirstOrDefault();
-        if (invite == null) return;
+        if (invite is null)
+            throw new Exception($"User {userId} has not been invited to group {groupId}.");
         _context.Invites.Remove(invite);
 
         if (GetUserToGroupId(userId, groupId) is not 0)
