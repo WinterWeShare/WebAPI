@@ -468,13 +468,26 @@ public class ClientController : ControllerBase
     [Route(nameof(GetInvitableFriends) + "/{userId}/{groupId}")]
     public IEnumerable<User> GetInvitableFriends(int userId, int groupId)
     {
-        var invitableFriends = from u in _context.Users 
-            join f in _context.Friendships on u.Id equals f.FriendId 
+        var userToGroupIds = GetUserToGroupIdsByGroupId(groupId).ToList();
+        
+        var friends = from f in _context.Friendships
             where f.UserId == userId
-            join utg in _context.UserToGroups on u.Id equals utg.UserId into utgJoin
-            from utg in utgJoin.DefaultIfEmpty()
-            where utg == null || utg.GroupId != groupId
-            select u;
+            select f;
+        
+        List<User> invitableFriends = new();
+        foreach (var friend in friends.ToList())
+        {
+            _context = new DbWeshareContext();
+            
+            if ((from utg in _context.UserToGroups
+                where utg.UserId == friend.FriendId && userToGroupIds.Contains(utg.Id)
+                select utg).FirstOrDefault() is not null)
+                continue;
+            
+            invitableFriends.Add((from u in _context.Users
+                where u.Id == friend.FriendId
+                select u).FirstOrDefault() ?? new User());
+        }
         return invitableFriends;
     }
 
@@ -967,7 +980,7 @@ public class ClientController : ControllerBase
     public IEnumerable<bool> IsApprovedToBePaid(int groupId)
     {
         var userToGroupIds = GetUserToGroupIdsByGroupId(groupId);
-        yield return _context.ToBePaids.Count(tbp => userToGroupIds.Contains(tbp.UserToGroupId) && !tbp.Approved) == 0;
+        yield return _context.ToBePaids.Count(tbp => userToGroupIds.Contains(tbp.UserToGroupId) && tbp.Approved) == userToGroupIds.Count();
     }
     
     /// <summary>
