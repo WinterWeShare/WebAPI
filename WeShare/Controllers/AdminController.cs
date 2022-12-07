@@ -87,7 +87,7 @@ public class AdminController : ControllerBase
     /// <param name="sessionKey"></param>
     /// <param name="adminId"></param>
     /// <param name="userId"></param>
-    [HttpPut]
+    [HttpDelete]
     [Route(nameof(ActivateUser) + "/{sessionKey}/{adminId}/{userId}")]
     public void ActivateUser(int sessionKey, int adminId, int userId)
     {
@@ -101,8 +101,10 @@ public class AdminController : ControllerBase
             throw new Exception($"User {userId} is not deactivated.");
 
         _context.DeactivatedUsers.Remove(user);
-
+        
         _context.SaveChanges();
+        
+        InsertAction("Delete", $"Activated user {userId}", adminId);
     }
     
     /// <summary>
@@ -111,7 +113,7 @@ public class AdminController : ControllerBase
     /// <param name="sessionKey"></param>
     /// <param name="adminId"></param>
     /// <param name="userId"></param>
-    [HttpPut]
+    [HttpPost]
     [Route(nameof(DeactivateUser) + "/{sessionKey}/{adminId}/{userId}")]
     public void DeactivateUser(int sessionKey, int adminId, int userId)
     {
@@ -126,8 +128,10 @@ public class AdminController : ControllerBase
             ByAdmin = true,
             UserId = userId
         });
-
+        
         _context.SaveChanges();
+        
+        InsertAction("Post", $"Deactivated user {userId}", adminId);
     }
     
     /// <summary>
@@ -137,13 +141,8 @@ public class AdminController : ControllerBase
     /// <param name="actionType"></param>
     /// <param name="description"></param>
     /// <param name="adminId"></param>
-    [HttpPost]
-    [Route(nameof(InsertAction) + "/{sessionKey}/{actionType}/{description}/{adminId}")]
-    public void InsertAction(int sessionKey, string actionType, string description, int adminId)
+    private void InsertAction(string actionType, string description, int adminId)
     {
-        if (!ValidateSessionKey(sessionKey, adminId).First())
-            throw new Exception("Invalid session key.");
-        
         _context.Actions.Add(new Action
         {
             ActionType = actionType,
@@ -280,8 +279,10 @@ public class AdminController : ControllerBase
         user.FirstName = firstName;
         user.LastName = lastName;
         user.PhoneNumber = phoneNumber;
-
+        
         _context.SaveChanges();
+        
+        InsertAction("Put", $"Updated user {userId}", adminId);
     }
     
     /// <summary>
