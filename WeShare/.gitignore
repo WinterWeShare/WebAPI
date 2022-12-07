@@ -9,3 +9,6 @@ gen
 appsettings.json
 appsettings.Production.json
 email.json
+bin/Debug/appsettings.json
+bin/Debug/appsettings.Production.json
+bin/Debug/email.json
