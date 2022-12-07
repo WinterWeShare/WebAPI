@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using WebAPI.Models;
-using Action = WebAPI.Models.Action;
+using WebAPI.Models.EntityFramework;
+using WebAPI.Models.Security;
+using Action = WebAPI.Models.EntityFramework.Action;
 
 namespace WebAPI.Controllers;
 
@@ -132,7 +133,7 @@ public class Controller : ControllerBase
             where g.Id == groupId && g.Closed
             select g).FirstOrDefault() is not null;
     }
-
+    
     /// <summary>
     ///     Gets a user from the database.
     /// </summary>
@@ -321,6 +322,8 @@ public class Controller : ControllerBase
     [Route(nameof(InsertPayment) + "/{userId}/{groupId}/{title}/{amount}")]
     public void InsertPayment(int userId, int groupId, string title, double amount)
     {
+        if (amount < 1) throw new Exception("Amount must be greater than 0.");
+        
         var userToGroupId = GetUserToGroupId(userId, groupId);
         if (userToGroupId == 0)
             throw new Exception($"User {userId} is not in group {groupId}.");
@@ -884,46 +887,6 @@ public class Controller : ControllerBase
         _context.SaveChanges();
     }
 
-    /// <summary>
-    ///     Deactivates a user by an admin.
-    /// </summary>
-    /// <param name="adminId"></param>
-    /// <param name="userId"></param>
-    [HttpPut]
-    [Route(nameof(AdminDeactivateUser) + "/{adminId}/{userId}")]
-    public void AdminDeactivateUser(int adminId, int userId)
-    {
-        if (_context.DeactivatedUsers.Any(du => du.UserId == userId))
-            throw new Exception($"User {userId} is already deactivated.");
-
-        _context.DeactivatedUsers.Add(new DeactivatedUser
-        {
-            ByAdmin = true,
-            UserId = userId
-        });
-
-        _context.SaveChanges();
-    }
-
-    /// <summary>
-    ///     Activates a user by an admin.
-    /// </summary>
-    /// <param name="adminId"></param>
-    /// <param name="userId"></param>
-    [HttpPut]
-    [Route(nameof(AdminActivateUser) + "/{adminId}/{userId}")]
-    public void AdminActivateUser(int adminId, int userId)
-    {
-        var user = (from u in _context.DeactivatedUsers
-            where u.UserId == userId
-            select u).FirstOrDefault();
-        if (user is null)
-            throw new Exception($"User {userId} is not deactivated.");
-
-        _context.DeactivatedUsers.Remove(user);
-
-        _context.SaveChanges();
-    }
 
     /// <summary>
     ///     Inserts an action made by an admin.
@@ -992,5 +955,106 @@ public class Controller : ControllerBase
             select p.Amount).Sum();
         var numberOfUsers = GetUserToGroupIdsByGroupId(groupId).Count();
         yield return totalSpent / numberOfUsers;
+    }
+    
+    /// <summary>
+    ///    Checks if a group is marked to be paid.
+    /// </summary>
+    /// <param name="groupId"></param>
+    /// <returns>
+    ///     A boolean indicating if a group is marked to be paid.
+    /// </returns>
+    [HttpGet]
+    [Route(nameof(IsMarkedToBePaid) + "/{groupId}")]
+    public IEnumerable<bool> IsMarkedToBePaid(int groupId)
+    {
+        yield return _context.ToBePaids.Any(tbp => GetUserToGroupIdsByGroupId(groupId).Contains(tbp.UserToGroupId) && !tbp.Approved);
+    }
+    
+    /// <summary>
+    ///     Checks if all of the users in a group have approved the payment.
+    /// </summary>
+    /// <param name="groupId"></param>
+    /// <returns>
+    ///     A boolean indicating if a group is approved to be paid.
+    /// </returns>
+    [HttpGet]
+    [Route(nameof(IsApprovedToBePaid) + "/{groupId}")]
+    public IEnumerable<bool> IsApprovedToBePaid(int groupId)
+    {
+        yield return _context.ToBePaids.All(tbp => GetUserToGroupIdsByGroupId(groupId).Contains(tbp.UserToGroupId) && tbp.Approved);
+    }
+    
+    /// <summary>
+    ///     Checks if a user has fulfilled their receipt in a group.
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="groupId"></param>
+    /// <returns>
+    ///     A boolean indicating if a user has fulfilled their receipt.
+    /// </returns>
+    [HttpGet]
+    [Route(nameof(HasFulfilledReceipt) + "/{userId}/{groupId}")]
+    public IEnumerable<bool> HasFulfilledReceipt(int userId, int groupId)
+    {
+        yield return _context.Receipts.Any(r => r.UserToGroupId == GetUserToGroupId(userId, groupId));
+    }
+    
+    /// <summary>
+    ///     Deactivates a user by an admin.
+    /// </summary>
+    /// <param name="adminId"></param>
+    /// <param name="userId"></param>
+    [HttpPut]
+    [Route(nameof(AdminDeactivateUser) + "/{adminId}/{userId}")]
+    public void AdminDeactivateUser(int adminId, int userId)
+    {
+        if (_context.DeactivatedUsers.Any(du => du.UserId == userId))
+            throw new Exception($"User {userId} is already deactivated.");
+
+        _context.DeactivatedUsers.Add(new DeactivatedUser
+        {
+            ByAdmin = true,
+            UserId = userId
+        });
+
+        _context.SaveChanges();
+    }
+
+    /// <summary>
+    ///     Activates a user by an admin.
+    /// </summary>
+    /// <param name="adminId"></param>
+    /// <param name="userId"></param>
+    [HttpPut]
+    [Route(nameof(AdminActivateUser) + "/{adminId}/{userId}")]
+    public void AdminActivateUser(int adminId, int userId)
+    {
+        var user = (from u in _context.DeactivatedUsers
+            where u.UserId == userId
+            select u).FirstOrDefault();
+        if (user is null)
+            throw new Exception($"User {userId} is not deactivated.");
+
+        _context.DeactivatedUsers.Remove(user);
+
+        _context.SaveChanges();
+    }
+    
+    /// <summary>
+    ///     Sends a mail to an admin containing the session key.
+    ///     
+    /// </summary>
+    /// <returns>
+    ///     The code from the TwoFactor class.
+    /// </returns>
+    [HttpGet]
+    [Route(nameof(GetAdminAuthPass))]
+    public IEnumerable<AuthPass> GetAdminAuthPass(int adminId)
+    {
+        TwoFactor twoFactor = new("sonkoly.marci02@gmail.com");
+        twoFactor.SendCode();
+        PasswordManager.Encrypt(twoFactor.Code.ToString(), out var encryptedValue, out var salt);
+        yield return new AuthPass(encryptedValue, salt);
     }
 }
