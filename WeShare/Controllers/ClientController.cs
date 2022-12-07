@@ -166,6 +166,24 @@ public class ClientController : ControllerBase
             where utg.GroupId == groupId
             select u;
     }
+    
+    /// <summary>
+    ///     Gets the user's name by their userToGroup id.
+    /// </summary>
+    /// <param name="userToGroupId"></param>
+    /// <returns>
+    ///     A string representing the user's name.
+    /// </returns>
+    [HttpGet]
+    [Route(nameof(GetUserNameByUserToGroupId) + "/{userToGroupId}")]
+    public IEnumerable<string> GetUserNameByUserToGroupId(int userToGroupId)
+    {
+        return from u in _context.Users
+            join utg in _context.UserToGroups
+                on u.Id equals utg.UserId
+            where utg.Id == userToGroupId
+            select $"{u.FirstName} {u.LastName}";
+    }
 
     /// <summary>
     ///     Inserts a new user in the database.
