@@ -1,12 +1,14 @@
-﻿namespace WebAPI.Models;
+﻿namespace WebAPI.Models.EntityFramework;
 
-public class ToBePaid
+public partial class Receipt
 {
     public int Id { get; set; }
 
     public int UserToGroupId { get; set; }
 
-    public bool Approved { get; set; }
+    public double Amount { get; set; }
+
+    public bool Fulfilled { get; set; }
 
     public DateTime? Date { get; set; }
 

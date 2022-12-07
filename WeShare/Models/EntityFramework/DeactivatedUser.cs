@@ -1,12 +1,12 @@
-﻿namespace WebAPI.Models;
+﻿namespace WebAPI.Models.EntityFramework;
 
-public class Wallet
+public partial class DeactivatedUser
 {
     public int Id { get; set; }
 
     public int UserId { get; set; }
 
-    public double Balance { get; set; }
+    public bool ByAdmin { get; set; }
 
     public virtual User User { get; set; } = null!;
 }

@@ -1,6 +1,6 @@
-﻿namespace WebAPI.Models;
+﻿namespace WebAPI.Models.EntityFramework;
 
-public class UserToGroup
+public partial class UserToGroup
 {
     public int Id { get; set; }
 

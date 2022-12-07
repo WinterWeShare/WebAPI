@@ -6,7 +6,7 @@ namespace Tests;
 [TestClass]
 public class UnitTest
 {
-    private Controller controller = new();
+    private ClientController _clientController = new();
 
     [ClassInitialize]
     public static void ClassInitialize(TestContext context)

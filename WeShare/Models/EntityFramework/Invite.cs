@@ -1,6 +1,6 @@
-﻿namespace WebAPI.Models;
+﻿namespace WebAPI.Models.EntityFramework;
 
-public class Invite
+public partial class Invite
 {
     public int Id { get; set; }
 

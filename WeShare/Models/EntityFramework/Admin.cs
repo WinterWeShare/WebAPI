@@ -1,6 +1,6 @@
-﻿namespace WebAPI.Models;
+﻿namespace WebAPI.Models.EntityFramework;
 
-public class Admin
+public partial class Admin
 {
     public int Id { get; set; }
 
@@ -11,4 +11,6 @@ public class Admin
     public string LastName { get; set; } = null!;
 
     public virtual ICollection<Action> Actions { get; } = new List<Action>();
+
+    public virtual ICollection<AdminSession> AdminSessions { get; } = new List<AdminSession>();
 }

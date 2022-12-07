@@ -1,13 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using WebAPI.Models.EntityFramework;
-using WebAPI.Models.Security;
 using Action = WebAPI.Models.EntityFramework.Action;
 
 namespace WebAPI.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class Controller : ControllerBase
+public class ClientController : ControllerBase
 {
     private DbWeshareContext _context = new();
 
@@ -641,7 +640,7 @@ public class Controller : ControllerBase
     /// <param name="userId"></param>
     /// <param name="groupId"></param>
     [HttpPut]
-    [Route(nameof(ApproveToBePaid) + "/{userId}/{groupId}")]
+    [Route(nameof(ApproveToBePaid) + "/{groupId}/{userId}")]
     public void ApproveToBePaid(int groupId, int userId)
     {
         var userToGroupId = GetUserToGroupId(userId, groupId);
@@ -750,10 +749,10 @@ public class Controller : ControllerBase
     /// <summary>
     ///     Fulfills a receipt by deducting the amount from the user's balance and marking the receipt as fulfilled.
     /// </summary>
-    /// <param name="userId"></param>
     /// <param name="groupId"></param>
+    /// <param name="userId"></param>
     [HttpPut]
-    [Route(nameof(FulfillReceipt) + "/{userId}/{groupId}")]
+    [Route(nameof(FulfillReceipt) + "/{groupId}/{userId}")]
     public void FulfillReceipt(int groupId, int userId)
     {
         var userToGroupId = GetUserToGroupId(userId, groupId);
@@ -888,40 +887,7 @@ public class Controller : ControllerBase
     }
 
 
-    /// <summary>
-    ///     Inserts an action made by an admin.
-    /// </summary>
-    /// <param name="actionType"></param>
-    /// <param name="description"></param>
-    /// <param name="adminId"></param>
-    [HttpPost]
-    [Route(nameof(InsertAction) + "/{actionType}/{description}/{adminId}")]
-    public void InsertAction(string actionType, string description, int adminId)
-    {
-        _context.Actions.Add(new Action
-        {
-            ActionType = actionType,
-            Description = description,
-            AdminId = adminId,
-            Date = DateTime.Now
-        });
-        _context.SaveChanges();
-    }
-
-    /// <summary>
-    ///     Gets all actions made by an admin.
-    /// </summary>
-    /// <returns>
-    ///     All actions made by an admin.
-    /// </returns>
-    [HttpGet]
-    [Route(nameof(GetActions) + "/{adminId}")]
-    public IEnumerable<Action> GetActions(int adminId)
-    {
-        return from a in _context.Actions
-            where a.AdminId == adminId
-            select a;
-    }
+    
     
     /// <summary>
     ///     Gets the total amount of money spent by a group.
@@ -982,7 +948,8 @@ public class Controller : ControllerBase
     [Route(nameof(IsApprovedToBePaid) + "/{groupId}")]
     public IEnumerable<bool> IsApprovedToBePaid(int groupId)
     {
-        yield return _context.ToBePaids.All(tbp => GetUserToGroupIdsByGroupId(groupId).Contains(tbp.UserToGroupId) && tbp.Approved);
+        var userToGroupIds = GetUserToGroupIdsByGroupId(groupId);
+        yield return _context.ToBePaids.Count(tbp => userToGroupIds.Contains(tbp.UserToGroupId) && !tbp.Approved) == 0;
     }
     
     /// <summary>
@@ -997,64 +964,8 @@ public class Controller : ControllerBase
     [Route(nameof(HasFulfilledReceipt) + "/{userId}/{groupId}")]
     public IEnumerable<bool> HasFulfilledReceipt(int userId, int groupId)
     {
-        yield return _context.Receipts.Any(r => r.UserToGroupId == GetUserToGroupId(userId, groupId));
+        yield return _context.Receipts.Any(r => r.UserToGroupId == GetUserToGroupId(userId, groupId) && r.Fulfilled);
     }
     
-    /// <summary>
-    ///     Deactivates a user by an admin.
-    /// </summary>
-    /// <param name="adminId"></param>
-    /// <param name="userId"></param>
-    [HttpPut]
-    [Route(nameof(AdminDeactivateUser) + "/{adminId}/{userId}")]
-    public void AdminDeactivateUser(int adminId, int userId)
-    {
-        if (_context.DeactivatedUsers.Any(du => du.UserId == userId))
-            throw new Exception($"User {userId} is already deactivated.");
-
-        _context.DeactivatedUsers.Add(new DeactivatedUser
-        {
-            ByAdmin = true,
-            UserId = userId
-        });
-
-        _context.SaveChanges();
-    }
-
-    /// <summary>
-    ///     Activates a user by an admin.
-    /// </summary>
-    /// <param name="adminId"></param>
-    /// <param name="userId"></param>
-    [HttpPut]
-    [Route(nameof(AdminActivateUser) + "/{adminId}/{userId}")]
-    public void AdminActivateUser(int adminId, int userId)
-    {
-        var user = (from u in _context.DeactivatedUsers
-            where u.UserId == userId
-            select u).FirstOrDefault();
-        if (user is null)
-            throw new Exception($"User {userId} is not deactivated.");
-
-        _context.DeactivatedUsers.Remove(user);
-
-        _context.SaveChanges();
-    }
     
-    /// <summary>
-    ///     Sends a mail to an admin containing the session key.
-    ///     
-    /// </summary>
-    /// <returns>
-    ///     The code from the TwoFactor class.
-    /// </returns>
-    [HttpGet]
-    [Route(nameof(GetAdminAuthPass))]
-    public IEnumerable<AuthPass> GetAdminAuthPass(int adminId)
-    {
-        TwoFactor twoFactor = new("sonkoly.marci02@gmail.com");
-        twoFactor.SendCode();
-        PasswordManager.Encrypt(twoFactor.Code.ToString(), out var encryptedValue, out var salt);
-        yield return new AuthPass(encryptedValue, salt);
-    }
 }

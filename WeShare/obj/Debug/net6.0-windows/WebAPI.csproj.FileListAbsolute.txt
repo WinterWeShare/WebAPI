@@ -514,3 +514,5 @@ C:/Users/Marpond/RiderProjects/WebAPI/WeShare/obj/Debug/net6.0-windows/ref/WebAP
 /home/marpond/RiderProjects/WebAPI/WeShare/obj/Debug/net6.0-windows/WebAPI.pdb
 /home/marpond/RiderProjects/WebAPI/WeShare/obj/Debug/net6.0-windows/WebAPI.genruntimeconfig.cache
 /home/marpond/RiderProjects/WebAPI/WeShare/bin/Debug/net6.0-windows/appsettings.Production.json
+/home/marpond/RiderProjects/WebAPI/WeShare/bin/Debug/net6.0-windows/email.json
+/home/marpond/RiderProjects/WebAPI/WeShare/bin/Debug/net6.0-windows/Newtonsoft.Json.dll

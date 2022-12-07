@@ -1,6 +1,6 @@
-﻿namespace WebAPI.Models;
+﻿namespace WebAPI.Models.EntityFramework;
 
-public class Friendship
+public partial class Friendship
 {
     public int Id { get; set; }
 

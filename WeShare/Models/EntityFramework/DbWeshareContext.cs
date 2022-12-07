@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace WebAPI.Models;
+namespace WebAPI.Models.EntityFramework;
 
 public partial class DbWeshareContext : DbContext
 {
@@ -17,6 +16,8 @@ public partial class DbWeshareContext : DbContext
     public virtual DbSet<Action> Actions { get; set; }
 
     public virtual DbSet<Admin> Admins { get; set; }
+
+    public virtual DbSet<AdminSession> AdminSessions { get; set; }
 
     public virtual DbSet<DeactivatedUser> DeactivatedUsers { get; set; }
 
@@ -34,20 +35,15 @@ public partial class DbWeshareContext : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
+    public virtual DbSet<UserSession> UserSessions { get; set; }
+
     public virtual DbSet<UserToGroup> UserToGroups { get; set; }
 
     public virtual DbSet<Wallet> Wallets { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        var projectPath = Environment.CurrentDirectory;
-        var configuration = new ConfigurationBuilder()
-            .SetBasePath(projectPath)
-            .AddJsonFile("appsettings.json")
-            .Build();
-        var connectionString = configuration.GetConnectionString("WeShare")!;
-        optionsBuilder.UseSqlServer(connectionString);
-    }
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("Server=49.12.241.224;database=db_weshare;user id=admin_weshare;password=WeSh@r33;trusted_connection=true;TrustServerCertificate=True;integrated security=false;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -89,6 +85,24 @@ public partial class DbWeshareContext : DbContext
                 .IsUnicode(false);
         });
 
+        modelBuilder.Entity<AdminSession>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__AdminSes__3214EC27DBADDFF9");
+
+            entity.ToTable("AdminSession");
+
+            entity.Property(e => e.Id).HasColumnName("ID");
+            entity.Property(e => e.AdminId).HasColumnName("AdminID");
+            entity.Property(e => e.Date).HasColumnType("datetime");
+            entity.Property(e => e.Salt).IsUnicode(false);
+            entity.Property(e => e.SessionKey).IsUnicode(false);
+
+            entity.HasOne(d => d.Admin).WithMany(p => p.AdminSessions)
+                .HasForeignKey(d => d.AdminId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__AdminSess__Admin__4D94879B");
+        });
+
         modelBuilder.Entity<DeactivatedUser>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__Deactiva__3214EC2748CE2A0D");
@@ -98,9 +112,10 @@ public partial class DbWeshareContext : DbContext
             entity.Property(e => e.Id).HasColumnName("ID");
             entity.Property(e => e.UserId).HasColumnName("UserID");
 
-            ((ReferenceCollectionBuilder)entity.HasOne(d => d.User).WithMany(p => p.DeactivatedUsers)
+            entity.HasOne(d => d.User).WithMany(p => p.DeactivatedUsers)
                 .HasForeignKey(d => d.UserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)).HasConstraintName("FK__Deactivat__UserI__38996AB5");
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__Deactivat__UserI__38996AB5");
         });
 
         modelBuilder.Entity<Friendship>(entity =>
@@ -234,6 +249,24 @@ public partial class DbWeshareContext : DbContext
             entity.Property(e => e.PhoneNumber)
                 .HasMaxLength(50)
                 .IsUnicode(false);
+        });
+
+        modelBuilder.Entity<UserSession>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__UserSess__3214EC27025F80B3");
+
+            entity.ToTable("UserSession");
+
+            entity.Property(e => e.Id).HasColumnName("ID");
+            entity.Property(e => e.Date).HasColumnType("datetime");
+            entity.Property(e => e.Salt).IsUnicode(false);
+            entity.Property(e => e.SessionKey).IsUnicode(false);
+            entity.Property(e => e.UserId).HasColumnName("UserID");
+
+            entity.HasOne(d => d.User).WithMany(p => p.UserSessions)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__UserSessi__UserI__5070F446");
         });
 
         modelBuilder.Entity<UserToGroup>(entity =>

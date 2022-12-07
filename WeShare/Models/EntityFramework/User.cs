@@ -1,6 +1,6 @@
-﻿namespace WebAPI.Models;
+﻿namespace WebAPI.Models.EntityFramework;
 
-public class User
+public partial class User
 {
     public int Id { get; set; }
 
@@ -21,6 +21,8 @@ public class User
     public virtual ICollection<Invite> InviteReceivers { get; } = new List<Invite>();
 
     public virtual ICollection<Invite> InviteSenders { get; } = new List<Invite>();
+
+    public virtual ICollection<UserSession> UserSessions { get; } = new List<UserSession>();
 
     public virtual ICollection<UserToGroup> UserToGroups { get; } = new List<UserToGroup>();
 
