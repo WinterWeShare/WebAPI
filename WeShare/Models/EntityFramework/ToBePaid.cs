@@ -1,6 +1,6 @@
 ﻿namespace WebAPI.Models.EntityFramework;
 
-public partial class ToBePaid
+public class ToBePaid
 {
     public int Id { get; set; }
 

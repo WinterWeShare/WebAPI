@@ -1,6 +1,6 @@
 ﻿namespace WebAPI.Models.EntityFramework;
 
-public partial class Payment
+public class Payment
 {
     public int Id { get; set; }
 

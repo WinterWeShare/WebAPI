@@ -8,11 +8,6 @@ namespace WebAPI.Models.Security;
 public class TwoFactor
 {
     private readonly Account _account;
-    public int Code { get; }
-    private string Receiver { get; }
-    private string IpAddress { get; }
-    private JObject Location { get; }
-    private string ProjectPath { get; }
 
     public TwoFactor(string receiver)
     {
@@ -26,6 +21,12 @@ public class TwoFactor
         IpAddress = GetIp().Result;
         Location = GetLocation().Result;
     }
+
+    public int Code { get; }
+    private string Receiver { get; }
+    private string IpAddress { get; }
+    private JObject Location { get; }
+    private string ProjectPath { get; }
 
     private async Task<string> GetIp()
     {
@@ -41,8 +42,8 @@ public class TwoFactor
 
     public void SendCode()
     {
-        MailMessage mail = new MailMessage();
-        SmtpClient smtpServer = new SmtpClient("smtp.gmail.com");
+        var mail = new MailMessage();
+        var smtpServer = new SmtpClient("smtp.gmail.com");
         mail.From = new MailAddress(_account.Email);
         mail.To.Add(Receiver);
         mail.Subject = "Two Factor Authentication";

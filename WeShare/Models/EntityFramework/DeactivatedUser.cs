@@ -1,6 +1,6 @@
 ﻿namespace WebAPI.Models.EntityFramework;
 
-public partial class DeactivatedUser
+public class DeactivatedUser
 {
     public int Id { get; set; }
 

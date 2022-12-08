@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using WebAPI.Models.EntityFramework;
-using Action = WebAPI.Models.EntityFramework.Action;
+using WebAPI.Models.Invoice;
 
 namespace WebAPI.Controllers;
 
@@ -99,7 +99,7 @@ public class ClientController : ControllerBase
             where u.Id == userId
             select u).FirstOrDefault() is not null;
     }
-    
+
     /// <summary>
     ///     Checks if the user is in a group.
     /// </summary>
@@ -116,7 +116,7 @@ public class ClientController : ControllerBase
             where utg.UserId == userId && utg.GroupId == groupId
             select utg).FirstOrDefault() is not null;
     }
-    
+
     /// <summary>
     ///     Checks if a group is closed.
     /// </summary>
@@ -132,7 +132,7 @@ public class ClientController : ControllerBase
             where g.Id == groupId && g.Closed
             select g).FirstOrDefault() is not null;
     }
-    
+
     /// <summary>
     ///     Gets a user from the database.
     /// </summary>
@@ -166,7 +166,7 @@ public class ClientController : ControllerBase
             where utg.GroupId == groupId
             select u;
     }
-    
+
     /// <summary>
     ///     Gets the user's name by their userToGroup id.
     /// </summary>
@@ -340,7 +340,7 @@ public class ClientController : ControllerBase
     public void InsertPayment(int userId, int groupId, string title, double amount)
     {
         if (amount < 1) throw new Exception("Amount must be greater than 0.");
-        
+
         var userToGroupId = GetUserToGroupId(userId, groupId);
         if (userToGroupId == 0)
             throw new Exception($"User {userId} is not in group {groupId}.");
@@ -367,6 +367,55 @@ public class ClientController : ControllerBase
     }
 
     /// <summary>
+    ///     Gets all the invoices of a user.
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <returns>
+    ///     A list of invoices.
+    /// </returns>
+    [HttpGet]
+    [Route(nameof(GetInvoices) + "/{userId}")]
+    public IEnumerable<Invoice> GetInvoices(int userId)
+    {
+        var user = (from u in _context.Users
+            where u.Id == userId
+            select u).FirstOrDefault();
+
+        List<Invoice> invoices = new();
+        var userToGroupIds = from utg in _context.UserToGroups where utg.UserId == userId select utg.Id;
+        foreach (var userToGroupId in userToGroupIds)
+        {
+            _context = new DbWeshareContext();
+
+            var group = (from g in _context.Groups
+                join utg in _context.UserToGroups
+                    on g.Id equals utg.GroupId
+                where utg.Id == userToGroupId
+                select g).FirstOrDefault();
+            var wallet = (from w in _context.Wallets
+                where w.UserId == user.Id
+                select w).FirstOrDefault();
+            var receipt = (from r in _context.Receipts
+                where r.UserToGroupId == userToGroupId
+                select r).FirstOrDefault();
+            var payments = (from p in _context.Payments
+                where p.UserToGroupId == userToGroupId
+                select p).ToList();
+
+            invoices.Add(new Invoice
+            {
+                User = user ?? new User(),
+                Group = group ?? new Group(),
+                Wallet = wallet ?? new Wallet(),
+                Receipt = receipt ?? new Receipt(),
+                Payments = payments
+            });
+        }
+
+        return invoices;
+    }
+
+    /// <summary>
     ///     Gets all the friendships of a user.
     /// </summary>
     /// <param name="userId"></param>
@@ -380,7 +429,7 @@ public class ClientController : ControllerBase
         var friendships = from f in _context.Friendships
             where f.UserId == userId
             select f;
-        
+
         foreach (var friendship in friendships)
         {
             _context = new DbWeshareContext();
@@ -455,17 +504,18 @@ public class ClientController : ControllerBase
             // Set the Sender, Group and Receiver properties
             invite.Sender = (from u in _context.Users
                 where u.Id == invite.SenderId
-                select u).FirstOrDefault()?? new User();
+                select u).FirstOrDefault() ?? new User();
             invite.Group = (from g in _context.Groups
                 where g.Id == invite.GroupId
-                select g).FirstOrDefault()?? new Group();
+                select g).FirstOrDefault() ?? new Group();
             invite.Receiver = (from u in _context.Users
                 where u.Id == invite.ReceiverId
-                select u).FirstOrDefault()?? new User();
+                select u).FirstOrDefault() ?? new User();
         }
+
         return invites;
     }
-    
+
     /// <summary>
     ///     Returns a list of all invitable friends for a user in a group.
     /// </summary>
@@ -479,25 +529,26 @@ public class ClientController : ControllerBase
     public IEnumerable<User> GetInvitableFriends(int userId, int groupId)
     {
         var userToGroupIds = GetUserToGroupIdsByGroupId(groupId).ToList();
-        
+
         var friends = from f in _context.Friendships
             where f.UserId == userId
             select f;
-        
+
         List<User> invitableFriends = new();
         foreach (var friend in friends.ToList())
         {
             _context = new DbWeshareContext();
-            
+
             if ((from utg in _context.UserToGroups
-                where utg.UserId == friend.FriendId && userToGroupIds.Contains(utg.Id)
-                select utg).FirstOrDefault() is not null)
+                    where utg.UserId == friend.FriendId && userToGroupIds.Contains(utg.Id)
+                    select utg).FirstOrDefault() is not null)
                 continue;
-            
+
             invitableFriends.Add((from u in _context.Users
                 where u.Id == friend.FriendId
                 select u).FirstOrDefault() ?? new User());
         }
+
         return invitableFriends;
     }
 
@@ -656,7 +707,7 @@ public class ClientController : ControllerBase
             Approved = true,
             Date = DateTime.Now
         });
-        
+
         userToGroupIds.Remove(GetUserToGroupId(userId, groupId));
         _context.ToBePaids.AddRange(userToGroupIds.Select(userToGroupId => new ToBePaid
         {
@@ -664,7 +715,7 @@ public class ClientController : ControllerBase
             Approved = false,
             Date = null
         }));
-        
+
         _context.SaveChanges();
 
         // Remove all the invites for the group.
@@ -847,19 +898,19 @@ public class ClientController : ControllerBase
         var userToGroupId = GetUserToGroupId(userToRemoveId, groupId);
         if (userToGroupId is 0)
             throw new Exception($"User {userToRemoveId} is not in group {groupId}.");
-        
+
         if (_context.Groups.Any(g => g.Id == groupId && g.Closed))
             throw new Exception($"Cannot remove user {userToRemoveId} from group {groupId} because the group is closed.");
 
         if (!_context.UserToGroups.Any(utg => utg.UserId == userId && utg.GroupId == groupId && utg.IsOwner))
             throw new Exception($"Cannot remove user {userToRemoveId} from group {groupId} because user {userId} is not the owner.");
-        
+
         if (_context.Receipts.Any(r => r.UserToGroupId == userToGroupId))
             throw new Exception($"Cannot remove user {userToRemoveId} from group {groupId} because they have a receipt.");
-       
+
         if (_context.ToBePaids.Any(t => t.UserToGroupId == userToGroupId))
             throw new Exception($"Cannot remove user {userToRemoveId} from group {groupId} because the group is marked as to be paid.");
-        
+
         if (_context.Payments.Any(p => p.UserToGroupId == userToGroupId))
             throw new Exception($"Cannot remove user {userToRemoveId} from group {groupId} because they have a payment.");
 
@@ -928,8 +979,6 @@ public class ClientController : ControllerBase
     }
 
 
-    
-    
     /// <summary>
     ///     Gets the total amount of money spent by a group.
     /// </summary>
@@ -941,11 +990,11 @@ public class ClientController : ControllerBase
     [Route(nameof(GetTotalSpent) + "/{groupId}")]
     public IEnumerable<double> GetTotalSpent(int groupId)
     {
-        yield return (from p in _context.Payments 
+        yield return (from p in _context.Payments
             where GetUserToGroupIdsByGroupId(groupId).Contains(p.UserToGroupId)
             select p.Amount).Sum();
     }
-    
+
     /// <summary>
     ///     Gets the fair share of a group.
     /// </summary>
@@ -957,15 +1006,15 @@ public class ClientController : ControllerBase
     [Route(nameof(GetFairShare) + "/{groupId}")]
     public IEnumerable<double> GetFairShare(int groupId)
     {
-        var totalSpent = (from p in _context.Payments 
+        var totalSpent = (from p in _context.Payments
             where GetUserToGroupIdsByGroupId(groupId).Contains(p.UserToGroupId)
             select p.Amount).Sum();
         var numberOfUsers = GetUserToGroupIdsByGroupId(groupId).Count();
         yield return totalSpent / numberOfUsers;
     }
-    
+
     /// <summary>
-    ///    Checks if a group is marked to be paid.
+    ///     Checks if a group is marked to be paid.
     /// </summary>
     /// <param name="groupId"></param>
     /// <returns>
@@ -977,7 +1026,7 @@ public class ClientController : ControllerBase
     {
         yield return _context.ToBePaids.Any(tbp => GetUserToGroupIdsByGroupId(groupId).Contains(tbp.UserToGroupId) && !tbp.Approved);
     }
-    
+
     /// <summary>
     ///     Checks if all of the users in a group have approved the payment.
     /// </summary>
@@ -992,7 +1041,7 @@ public class ClientController : ControllerBase
         var userToGroupIds = GetUserToGroupIdsByGroupId(groupId);
         yield return _context.ToBePaids.Count(tbp => userToGroupIds.Contains(tbp.UserToGroupId) && tbp.Approved) == userToGroupIds.Count();
     }
-    
+
     /// <summary>
     ///     Checks if a user has fulfilled their receipt in a group.
     /// </summary>
@@ -1007,6 +1056,4 @@ public class ClientController : ControllerBase
     {
         yield return _context.Receipts.Any(r => r.UserToGroupId == GetUserToGroupId(userId, groupId) && r.Fulfilled);
     }
-    
-    
 }

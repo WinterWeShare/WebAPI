@@ -1,6 +1,6 @@
 ﻿namespace WebAPI.Models.EntityFramework;
 
-public partial class Admin
+public class Admin
 {
     public int Id { get; set; }
 

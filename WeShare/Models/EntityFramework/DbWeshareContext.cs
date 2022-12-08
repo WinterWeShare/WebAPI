@@ -40,7 +40,7 @@ public partial class DbWeshareContext : DbContext
     public virtual DbSet<UserToGroup> UserToGroups { get; set; }
 
     public virtual DbSet<Wallet> Wallets { get; set; }
-    
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         var configuration = new ConfigurationBuilder()
@@ -50,7 +50,7 @@ public partial class DbWeshareContext : DbContext
         var connectionString = configuration.GetConnectionString("WeShare")!;
         optionsBuilder.UseSqlServer(connectionString);
     }
-    
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Action>(entity =>
