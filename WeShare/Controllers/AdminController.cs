@@ -37,9 +37,7 @@ public class AdminController : ControllerBase
         // Send it to the admin
         twoFactor.SendCode();
         // Encrypt the code
-        string sessionKey;
-        string salt;
-        Encryption.Create(twoFactor.Code.ToString(), out sessionKey, out salt);
+        Encryption.Create(twoFactor.Code.ToString(), out var sessionKey, out var salt);
         // Save the encrypted code and salt
         _context.AdminSessions.Add(new AdminSession
         {
@@ -73,7 +71,7 @@ public class AdminController : ControllerBase
             SessionKey = string.Empty,
             Salt = string.Empty
         };
-        
+
         // If the session is not a newly created one and is from yesterday, delete it and throw an exception
         if (adminSession.Date.Date < DateTime.Now.Date)
         {
@@ -212,10 +210,10 @@ public class AdminController : ControllerBase
         var adminId = (from a in _context.Admins
             where a.Email == email
             select a.Id).FirstOrDefault();
-        
+
         if (!ValidateSessionKey(sessionKey, adminId).First())
             throw new Exception("Invalid session key.");
-        
+
         return from a in _context.Admins
             where a.Email == email
             select a.Id;
