@@ -377,9 +377,19 @@ public class ClientController : ControllerBase
     [Route(nameof(GetFriendships) + "/{userId}")]
     public IEnumerable<Friendship> GetFriendships(int userId)
     {
-        return from f in _context.Friendships
+        var friendships = from f in _context.Friendships
             where f.UserId == userId
             select f;
+        
+        foreach (var friendship in friendships)
+        {
+            _context = new DbWeshareContext();
+            friendship.Friend = (from u in _context.Users
+                where u.Id == friendship.FriendId
+                select u).FirstOrDefault() ?? new User();
+        }
+
+        return friendships;
     }
 
     /// <summary>

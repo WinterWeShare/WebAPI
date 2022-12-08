@@ -321,6 +321,28 @@ public class AdminController : ControllerBase
         
         InsertAction("Put", $"Updated user {userId}", adminId);
     }
+   
+    /// <summary>
+    ///     Gets all the groups a user is in.
+    /// </summary>
+    /// <param name="sessionKey"></param>
+    /// <param name="adminId"></param>
+    /// <param name="userId"></param>
+    /// <returns>
+    ///     All the groups a user is in.
+    /// </returns>
+    [HttpGet]
+    [Route(nameof(GetUserGroups) + "/{sessionKey}/{adminId}/{userId}")]
+    public IEnumerable<Group> GetUserGroups(int sessionKey, int adminId, int userId)
+    {
+        if (!ValidateSessionKey(sessionKey, adminId).First())
+            throw new Exception("Invalid session key.");
+        
+        return from g in _context.Groups
+            join utg in _context.UserToGroups on g.Id equals utg.GroupId
+            where utg.UserId == userId
+            select g;
+    }
     
     /// <summary>
     ///     Gets all payments made by a user.
