@@ -67,17 +67,18 @@ public class AdminController : ControllerBase
         // Get the admin session
         var adminSession = (from a in _context.AdminSessions
             where a.AdminId == adminId
-            select a).FirstOrDefault();
-
-        if (adminSession is null)
-            throw new Exception($"Admin {adminId} has no session key.");
-
-        // If the session is from yesterday, delete it and throw an exception
+            select a).FirstOrDefault() ?? new AdminSession
+        {
+            Date = DateTime.Now,
+            SessionKey = string.Empty,
+            Salt = string.Empty
+        };
+        
+        // If the session is not a newly created one and is from yesterday, delete it and throw an exception
         if (adminSession.Date.Date < DateTime.Now.Date)
         {
             _context.AdminSessions.Remove(adminSession);
             _context.SaveChanges();
-            throw new Exception($"Admin {adminId}'s session key has expired.");
         }
 
         yield return Encryption.Compare(sessionKey.ToString(), adminSession.SessionKey, adminSession.Salt);

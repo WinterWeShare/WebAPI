@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using WebAPI.Models.EntityFramework;
 using WebAPI.Models.Invoice;
+using WebAPI.Models.Security;
 
 namespace WebAPI.Controllers;
 
@@ -33,6 +34,77 @@ public class ClientController : ControllerBase
             where utg.GroupId == groupId
             select utg.Id;
     }
+    
+        /// <summary>
+        ///     Sends a mail to the user containing the session id.
+        ///     Saves the session id in the database.
+        /// </summary>
+        /// <param name="email"></param>
+        [HttpPost]
+        [Route(nameof(CreateSession) + "/{email}")]
+        public void CreateSession(string email)
+        {
+            var user = (from a in _context.Users
+                where a.Email == email
+                select a).FirstOrDefault();
+            if (user is null) throw new Exception("User not found");
+    
+            if (_context.UserSessions.Any(a => a.UserId == user.Id && a.Date.Date == DateTime.Now.Date))
+            {
+                _context.UserSessions.RemoveRange(_context.UserSessions.Where(a => a.UserId == user.Id && a.Date.Date == DateTime.Now.Date));
+                _context.SaveChanges();
+            }
+    
+            // Create the TwoFactor code
+            TwoFactor twoFactor = new(user.Email);
+            // Send it to the user
+            twoFactor.SendCode();
+            // Encrypt the code
+            string sessionKey;
+            string salt;
+            Encryption.Create(twoFactor.Code.ToString(), out sessionKey, out salt);
+            // Save the encrypted code and salt
+            _context.UserSessions.Add(new UserSession
+            {
+                UserId = user.Id,
+                SessionKey = sessionKey,
+                Salt = salt,
+                Date = DateTime.Now
+            });
+            _context.SaveChanges();
+        }
+    
+        /// <summary>
+        ///     Checks if the user has the correct session key.
+        /// </summary>
+        /// <param name="sessionKey"></param>
+        /// <param name="userId"></param>
+        /// <returns>
+        ///     A boolean indicating if the user has the correct session key.
+        /// </returns>
+        [HttpGet]
+        [Route(nameof(ValidateSessionKey) + "/{sessionKey}/{userId}")]
+        public IEnumerable<bool> ValidateSessionKey(int sessionKey, int userId)
+        {
+            // Get the user session
+            var userSession = (from a in _context.UserSessions
+                where a.UserId == userId
+                select a).FirstOrDefault() ?? new UserSession
+            {
+                Date = DateTime.Now,
+                SessionKey = string.Empty,
+                Salt = string.Empty
+            };
+            
+            // If the session is from yesterday, delete it and throw an exception
+            if (userSession.Date.Date < DateTime.Now.Date)
+            {
+                _context.UserSessions.Remove(userSession);
+                _context.SaveChanges();
+            }
+    
+            yield return Encryption.Compare(sessionKey.ToString(), userSession.SessionKey, userSession.Salt);
+        }
 
     /// <summary>
     ///     Gets an id of an user by their email
@@ -53,16 +125,16 @@ public class ClientController : ControllerBase
     /// <summary>
     ///     Checks if the user exists.
     /// </summary>
-    /// <param name="userId" />
+    /// <param name="email" />
     /// <returns>
     ///     A bool value representing if the user exists.
     /// </returns>
     [HttpGet]
-    [Route(nameof(IsUserExists) + "/{userId}")]
-    public IEnumerable<bool> IsUserExists(int userId)
+    [Route(nameof(IsUserExists) + "/{email}")]
+    public IEnumerable<bool> IsUserExists(string email)
     {
         yield return (from u in _context.Users
-            where u.Id == userId
+            where u.Email == email
             select u).FirstOrDefault() is not null;
     }
 
@@ -92,12 +164,28 @@ public class ClientController : ControllerBase
     ///     A bool value representing if the user is deactivated
     /// </returns>
     [HttpGet]
-    [Route(nameof(IsUserDeactivated) + "/{userId}")]
-    public IEnumerable<bool> IsUserDeactivated(int userId)
+    [Route(nameof(IsUserDeactivatedThemselves) + "/{userId}")]
+    public IEnumerable<bool> IsUserDeactivatedThemselves(int userId)
     {
-        yield return (from u in _context.DeactivatedUsers
-            where u.Id == userId
-            select u).FirstOrDefault() is not null;
+        yield return (from du in _context.DeactivatedUsers
+            where du.Id == userId && du.ByAdmin == false
+            select du).FirstOrDefault() is not null;
+    }
+    
+    /// <summary>
+    ///     Checks if a user is deactivated by an admin.
+    /// </summary>
+    /// <param name="userId" />
+    /// <returns>
+    ///     A bool value representing if the user is deactivated by an admin.
+    /// </returns>
+    [HttpGet]
+    [Route(nameof(IsUserDeactivatedByAdmin) + "/{userId}")]
+    public IEnumerable<bool> IsUserDeactivatedByAdmin(int userId)
+    {
+        yield return (from du in _context.DeactivatedUsers
+            where du.Id == userId && du.ByAdmin
+            select du).FirstOrDefault() is not null;
     }
 
     /// <summary>
@@ -939,6 +1027,28 @@ public class ClientController : ControllerBase
     }
 
     /// <summary>
+    ///     Activates a user.
+    /// </summary>
+    /// <param name="userId"></param>
+    [HttpPut]
+    [Route(nameof(ActivateUser) + "/{userId}")]
+    public void ActivateUser(int userId)
+    {
+        var user = (from u in _context.DeactivatedUsers
+            where u.UserId == userId
+            select u).FirstOrDefault();
+        
+        if (user is null)
+            throw new Exception($"User {userId} is not deactivated.");
+
+        if (user.ByAdmin)
+            throw new Exception($"User {userId} is deactivated by an admin and cannot activate themselves.");
+
+        _context.DeactivatedUsers.Remove(user);
+        _context.SaveChanges();
+    }
+
+    /// <summary>
     ///     Deactivates a user until a given date.
     /// </summary>
     /// <param name="userId"></param>
@@ -954,27 +1064,6 @@ public class ClientController : ControllerBase
             UserId = userId,
             ByAdmin = false
         });
-        _context.SaveChanges();
-    }
-
-    /// <summary>
-    ///     Activates a user.
-    /// </summary>
-    /// <param name="userId"></param>
-    [HttpPut]
-    [Route(nameof(ActivateUser) + "/{userId}")]
-    public void ActivateUser(int userId)
-    {
-        var user = (from u in _context.DeactivatedUsers
-            where u.UserId == userId
-            select u).FirstOrDefault();
-        if (user is null)
-            throw new Exception($"User {userId} is not deactivated.");
-
-        if (user.ByAdmin)
-            throw new Exception($"User {userId} is deactivated by an admin and cannot activate themselves.");
-
-        _context.DeactivatedUsers.Remove(user);
         _context.SaveChanges();
     }
 
