@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using WebAPI.Models.EntityFramework;
+using WebAPI.Models.Invoice;
 using WebAPI.Models.Security;
 using Action = WebAPI.Models.EntityFramework.Action;
 
@@ -10,7 +11,7 @@ namespace WebAPI.Controllers;
 [Route("[controller]")]
 public class AdminController : ControllerBase
 {
-    private readonly DbWeshareContext _context = new();
+    private DbWeshareContext _context = new();
     
     /// <summary>
     ///     Sends a mail to the admin containing the session id.
@@ -399,9 +400,47 @@ public class AdminController : ControllerBase
     /// </returns>
     [HttpGet]
     [Route(nameof(GetUserInvoices) + "/{sessionKey}/{adminId}/{userId}")]
-    public IEnumerable<Exception> GetUserInvoices(int sessionKey, int adminId, int userId)
+    public IEnumerable<Invoice> GetUserInvoices(int sessionKey, int adminId, int userId)
     {
-        throw new NotImplementedException();
+        if (!ValidateSessionKey(sessionKey, adminId).First())
+            throw new Exception("Invalid session key.");
+        
+        var user = (from u in _context.Users
+            where u.Id == userId
+            select u).FirstOrDefault();
+        
+        List<Invoice> invoices = new();
+        var userToGroupIds = from utg in _context.UserToGroups where utg.UserId == userId select utg.Id;
+        foreach (var userToGroupId in userToGroupIds)
+        {
+            _context = new DbWeshareContext();
+                    
+            var group = (from g in _context.Groups
+                join utg in _context.UserToGroups
+                    on g.Id equals utg.GroupId
+                where utg.Id == userToGroupId
+                select g).FirstOrDefault(); 
+            var wallet = (from w in _context.Wallets
+                where w.UserId == user.Id
+                select w).FirstOrDefault();
+            var receipt = (from r in _context.Receipts
+                where r.UserToGroupId == userToGroupId
+                select r).FirstOrDefault();
+            var payments = (from p in _context.Payments
+                where p.UserToGroupId == userToGroupId
+                select p).ToList();
+                    
+            invoices.Add(new Invoice
+            {
+                User = user ?? new User(),
+                Group = group ?? new Group(),
+                Wallet = wallet ?? new Wallet(),
+                Receipt = receipt ?? new Receipt(),
+                Payments = payments
+            });
+        }
+                
+        return invoices;
     }
     
     /// <summary>
@@ -459,9 +498,46 @@ public class AdminController : ControllerBase
     /// </returns>
     [HttpGet]
     [Route(nameof(GetGroupInvoices) + "/{sessionKey}/{adminId}/{groupId}")]
-    public IEnumerable<Exception> GetGroupInvoices(int sessionKey, int adminId, int groupId)
+    public IEnumerable<Invoice> GetGroupInvoices(int sessionKey, int adminId, int groupId)
     {
-        throw new NotImplementedException();
+        if (!ValidateSessionKey(sessionKey, adminId).First())
+            throw new Exception("Invalid session key.");
+        
+        var group = (from g in _context.Groups
+            where g.Id == groupId
+            select g).FirstOrDefault();
+        
+        List<Invoice> invoices = new();
+        var userToGroupIds = from utg in _context.UserToGroups where utg.GroupId == groupId select utg.Id;
+        foreach (var userToGroupId in userToGroupIds)
+        {
+            _context = new DbWeshareContext();
+            
+            var user = (from u in _context.Users
+                join utg in _context.UserToGroups on u.Id equals utg.UserId
+                where utg.Id == userToGroupId
+                select u).FirstOrDefault();
+            var wallet = (from w in _context.Wallets
+                where w.UserId == user.Id
+                select w).FirstOrDefault();
+            var receipt = (from r in _context.Receipts
+                where r.UserToGroupId == userToGroupId
+                select r).FirstOrDefault();
+            var payments = (from p in _context.Payments
+                where p.UserToGroupId == userToGroupId
+                select p).ToList();
+            
+            invoices.Add(new Invoice
+            {
+                User = user ?? new User(),
+                Group = group ?? new Group(),
+                Wallet = wallet ?? new Wallet(),
+                Receipt = receipt ?? new Receipt(),
+                Payments = payments
+            });
+        }
+        
+        return invoices;
     }
     
     /// <summary>
