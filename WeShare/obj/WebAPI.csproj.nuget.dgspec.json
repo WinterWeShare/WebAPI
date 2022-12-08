@@ -1,25 +1,27 @@
 {
   "format": 1,
   "restore": {
-    "/home/marpond/RiderProjects/WebAPI/WeShare/WebAPI.csproj": {}
+    "C:\\Users\\Marpond\\RiderProjects\\WebAPI\\WeShare\\WebAPI.csproj": {}
   },
   "projects": {
-    "/home/marpond/RiderProjects/WebAPI/WeShare/WebAPI.csproj": {
+    "C:\\Users\\Marpond\\RiderProjects\\WebAPI\\WeShare\\WebAPI.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/marpond/RiderProjects/WebAPI/WeShare/WebAPI.csproj",
+        "projectUniqueName": "C:\\Users\\Marpond\\RiderProjects\\WebAPI\\WeShare\\WebAPI.csproj",
         "projectName": "WebAPI",
-        "projectPath": "/home/marpond/RiderProjects/WebAPI/WeShare/WebAPI.csproj",
-        "packagesPath": "/home/marpond/.nuget/packages/",
-        "outputPath": "/home/marpond/RiderProjects/WebAPI/WeShare/obj/",
+        "projectPath": "C:\\Users\\Marpond\\RiderProjects\\WebAPI\\WeShare\\WebAPI.csproj",
+        "packagesPath": "C:\\Users\\Marpond\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Marpond\\RiderProjects\\WebAPI\\WeShare\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/home/marpond/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\Marpond\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
           "net6.0-windows"
         ],
         "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -67,10 +69,25 @@
             "net47",
             "net471",
             "net472",
-            "net48"
+            "net48",
+            "net481"
           ],
           "assetTargetFallback": true,
           "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Runtime.linux-x64",
+              "version": "[6.0.11, 6.0.11]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Host.linux-x64",
+              "version": "[6.0.11, 6.0.11]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Runtime.linux-x64",
+              "version": "[6.0.11, 6.0.11]"
+            }
+          ],
           "frameworkReferences": {
             "Microsoft.AspNetCore.App": {
               "privateAssets": "none"
@@ -79,7 +96,12 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/lib64/dotnet/sdk/6.0.111/RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.100\\RuntimeIdentifierGraph.json"
+        }
+      },
+      "runtimes": {
+        "linux-x64": {
+          "#import": []
         }
       }
     }

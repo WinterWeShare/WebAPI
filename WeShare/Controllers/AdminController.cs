@@ -174,6 +174,43 @@ public class AdminController : ControllerBase
     }
     
     /// <summary>
+    ///    Gets all actions made on a user.
+    /// </summary>
+    /// <param name="sessionKey"></param>
+    /// <param name="adminId"></param>
+    /// <param name="userId"></param>
+    /// <returns>
+    ///     All actions made on a user.
+    /// </returns>
+    [HttpGet]
+    [Route(nameof(GetActionsOnUser) + "/{sessionKey}/{adminId}/{userId}")]
+    public IEnumerable<Action> GetActionsOnUser(int sessionKey, int adminId, int userId)
+    {
+        if (!ValidateSessionKey(sessionKey, adminId).First())
+            throw new Exception("Invalid session key.");
+        
+        return from a in _context.Actions
+            where a.Description.Contains($"user {userId}")
+            select a;
+    }
+    
+    /// <summary>
+    ///     Gets an admin's id by their email.
+    /// </summary>
+    /// <param name="email"></param>
+    /// <returns>
+    ///     An admin's id.
+    /// </returns>
+    [HttpGet]
+    [Route(nameof(GetAdminId) + "/{email}")]
+    public IEnumerable<int> GetAdminId(string email)
+    {
+        return from a in _context.Admins
+            where a.Email == email
+            select a.Id;
+    }
+
+    /// <summary>
     ///     Gets all the users.
     /// </summary>
     /// <param name="sessionKey"></param>
@@ -405,4 +442,30 @@ public class AdminController : ControllerBase
         throw new NotImplementedException();
     }
     
+    /// <summary>
+    ///     Closes a group.
+    /// </summary>
+    /// <param name="sessionKey"></param>
+    /// <param name="adminId"></param>
+    /// <param name="groupId"></param>
+    [HttpPut]
+    [Route(nameof(CloseGroup) + "/{sessionKey}/{adminId}/{groupId}")]
+    public void CloseGroup(int sessionKey, int adminId, int groupId)
+    {
+        if (!ValidateSessionKey(sessionKey, adminId).First())
+            throw new Exception("Invalid session key.");
+        
+        var group = (from g in _context.Groups
+            where g.Id == groupId
+            select g).FirstOrDefault();
+        if (group is null)
+            throw new Exception($"Group {groupId} does not exist.");
+        
+        group.Closed = true;
+        
+        _context.SaveChanges();
+        
+        InsertAction("Put", $"Closed group {groupId}", adminId);
+    }
+
 }
