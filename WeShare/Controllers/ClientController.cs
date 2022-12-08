@@ -107,15 +107,17 @@ public class ClientController : ControllerBase
     ///     Gets an id of an user by their email
     /// </summary>
     /// <param name="sessionKey"></param>
-    /// <param name="userId"></param>
     /// <param name="email"></param>
     /// <returns>
     ///     The id of the user.
     /// </returns>
     [HttpGet]
-    [Route(nameof(GetUserId) + "/{sessionKey}/{userId}/{email}")]
-    public IEnumerable<int> GetUserId(int sessionKey, int userId, string email)
+    [Route(nameof(GetUserId) + "/{sessionKey}/{email}")]
+    public IEnumerable<int> GetUserId(int sessionKey, string email)
     {
+        var userId = (from u in _context.Users
+            where u.Email == email
+            select u.Id).FirstOrDefault();
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
         
         return from u in _context.Users
