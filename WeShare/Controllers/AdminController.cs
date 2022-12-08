@@ -16,17 +16,19 @@ public class AdminController : ControllerBase
     ///     Sends a mail to the admin containing the session id.
     ///     Saves the session id in the database.
     /// </summary>
-    /// <param name="adminId"></param>
+    /// <param name="email"></param>
     [HttpPost]
-    [Route(nameof(CreateSession) + "/{adminId}")]
-    public void CreateSession(int adminId)
+    [Route(nameof(CreateSession) + "/{email}")]
+    public void CreateSession(string email)
     {
-        var admin = _context.Admins.Find(adminId);
+        var admin = (from a in _context.Admins
+            where a.Email == email
+            select a).FirstOrDefault();
         if (admin is null) throw new Exception("Admin not found");
 
-        if (_context.AdminSessions.Any(a => a.AdminId == adminId && a.Date.Date == DateTime.Now.Date))
+        if (_context.AdminSessions.Any(a => a.AdminId == admin.Id && a.Date.Date == DateTime.Now.Date))
         {
-            _context.AdminSessions.RemoveRange(_context.AdminSessions.Where(a => a.AdminId == adminId && a.Date.Date == DateTime.Now.Date));
+            _context.AdminSessions.RemoveRange(_context.AdminSessions.Where(a => a.AdminId == admin.Id && a.Date.Date == DateTime.Now.Date));
             _context.SaveChanges();
         }
 
@@ -41,7 +43,7 @@ public class AdminController : ControllerBase
         // Save the encrypted code and salt
         _context.AdminSessions.Add(new AdminSession
         {
-            AdminId = adminId,
+            AdminId = admin.Id,
             SessionKey = sessionKey,
             Salt = salt,
             Date = DateTime.Now
@@ -197,14 +199,22 @@ public class AdminController : ControllerBase
     /// <summary>
     ///     Gets an admin's id by their email.
     /// </summary>
+    /// <param name="sessionKey"></param>
     /// <param name="email"></param>
     /// <returns>
     ///     An admin's id.
     /// </returns>
     [HttpGet]
-    [Route(nameof(GetAdminId) + "/{email}")]
-    public IEnumerable<int> GetAdminId(string email)
+    [Route(nameof(GetAdminId) + "/{sessionKey}/{email}")]
+    public IEnumerable<int> GetAdminId(int sessionKey, string email)
     {
+        var adminId = (from a in _context.Admins
+            where a.Email == email
+            select a.Id).FirstOrDefault();
+        
+        if (!ValidateSessionKey(sessionKey, adminId).First())
+            throw new Exception("Invalid session key.");
+        
         return from a in _context.Admins
             where a.Email == email
             select a.Id;
