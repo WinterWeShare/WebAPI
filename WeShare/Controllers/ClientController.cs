@@ -101,9 +101,7 @@ public class ClientController : ControllerBase
             _context.SaveChanges();
         }
 
-        var success = Encryption.Compare(sessionKey.ToString(), userSession.SessionKey, userSession.Salt);
-        Console.WriteLine($"User {userId} has validated session key {sessionKey} with result {success}");
-        yield return success;
+        yield return Encryption.Compare(sessionKey.ToString(), userSession.SessionKey, userSession.Salt);
     }
 
     /// <summary>
