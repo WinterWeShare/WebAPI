@@ -95,9 +95,10 @@ public class AdminController : ControllerBase
         if (!ValidateSessionKey(sessionKey, adminId).First())
             throw new Exception("Invalid session key.");
 
-        var user = (from u in _context.DeactivatedUsers
-            where u.UserId == userId
-            select u).FirstOrDefault();
+        var user = (from du in _context.DeactivatedUsers
+            where du.UserId == userId
+            select du).FirstOrDefault();
+        
         if (user is null)
             throw new Exception($"User {userId} is not deactivated.");
 

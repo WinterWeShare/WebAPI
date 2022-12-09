@@ -145,7 +145,7 @@ public class ClientController : ControllerBase
     }
 
     /// <summary>
-    ///     Gets if a user is the owner of a group.
+    ///     Gets if the current user is the owner of a group.
     /// </summary>
     /// <param name="sessionKey"></param>
     /// <param name="userId"></param>
@@ -154,14 +154,36 @@ public class ClientController : ControllerBase
     ///     A bool value representing if the user is the owner of the group.
     /// </returns>
     [HttpGet]
-    [Route(nameof(IsUserOwner) + "/{sessionKey}/{userId}/{groupId}")]
-    public IEnumerable<bool> IsUserOwner(int sessionKey, int userId, int groupId)
+    [Route(nameof(IsOwner) + "/{sessionKey}/{userId}/{groupId}")]
+    public IEnumerable<bool> IsOwner(int sessionKey, int userId, int groupId)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
         
         yield return (from g in _context.Groups
             join utg in _context.UserToGroups on g.Id equals utg.GroupId
             where g.Id == groupId && utg.UserId == userId && utg.IsOwner
+            select g).FirstOrDefault() is not null;
+    }
+    
+    /// <summary>
+    ///     Gets if a user is the owner of a group.
+    /// </summary>
+    /// <param name="sessionKey"></param>
+    /// <param name="userId"></param>
+    /// <param name="groupId" />
+    /// <param name="targetId"></param>
+    /// <returns>
+    ///     A bool value representing if the user is the owner of the group.
+    /// </returns>
+    [HttpGet]
+    [Route(nameof(IsUserOwner) + "/{sessionKey}/{userId}/{groupId}/{targetId}")]
+    public IEnumerable<bool> IsUserOwner(int sessionKey, int userId, int groupId, int targetId)
+    {
+        if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
+        
+        yield return (from g in _context.Groups
+            join utg in _context.UserToGroups on g.Id equals utg.GroupId
+            where g.Id == groupId && utg.UserId == targetId && utg.IsOwner
             select g).FirstOrDefault() is not null;
     }
 
@@ -626,15 +648,13 @@ public class ClientController : ControllerBase
     /// </returns>
     [HttpGet]
     [Route(nameof(GetFriendId) + "/{sessionKey}/{userId}/{email}")]
-    public int GetFriendId(int sessionKey, int userId, string email)
+    public IEnumerable<int> GetFriendId(int sessionKey, int userId, string email)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
         
-        var friend = (from u in _context.Users
+        return from u in _context.Users
             where u.Email == email
-            select u).FirstOrDefault();
-
-        return friend?.Id ?? 0;
+            select u.Id;
     }
 
     /// <summary>
@@ -1188,15 +1208,15 @@ public class ClientController : ControllerBase
     /// </summary>
     /// <param name="sessionKey"></param>
     /// <param name="userId"></param>
-    [HttpPut]
+    [HttpDelete]
     [Route(nameof(ActivateUser) + "/{sessionKey}/{userId}")]
     public void ActivateUser(int sessionKey, int userId)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
         
-        var user = (from u in _context.DeactivatedUsers
-            where u.UserId == userId
-            select u).FirstOrDefault();
+        var user = (from du in _context.DeactivatedUsers
+            where du.UserId == userId
+            select du).FirstOrDefault();
 
         if (user is null)
             throw new Exception($"User {userId} is not deactivated.");
@@ -1209,11 +1229,11 @@ public class ClientController : ControllerBase
     }
 
     /// <summary>
-    ///     Deactivates a user until a given date.
+    ///     Deactivates a user.
     /// </summary>
     /// <param name="sessionKey"></param>
     /// <param name="userId"></param>
-    [HttpPut]
+    [HttpPost]
     [Route(nameof(DeactivateUser) + "/{sessionKey}/{userId}")]
     public void DeactivateUser(int sessionKey, int userId)
     {
