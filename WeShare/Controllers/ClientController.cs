@@ -544,14 +544,19 @@ public class ClientController : ControllerBase
     [Route(nameof(GetInvoices) + "/{sessionKey}/{userId}")]
     public IEnumerable<Invoice> GetInvoices(int sessionKey, int userId)
     {
-        if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
+        if (!ValidateSessionKey(sessionKey, userId).First()) 
+            throw new Exception("Invalid session key");
         
         var user = (from u in _context.Users
             where u.Id == userId
             select u).FirstOrDefault();
 
         List<Invoice> invoices = new();
-        var userToGroupIds = from utg in _context.UserToGroups where utg.UserId == userId select utg.Id;
+        var userToGroupIds = from utg in _context.UserToGroups
+            join r in _context.Receipts on utg.Id equals r.UserToGroupId
+                where r.Fulfilled && utg.UserId == userId
+                select utg.Id;
+        
         foreach (var userToGroupId in userToGroupIds)
         {
             _context = new DbWeshareContext();
