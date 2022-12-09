@@ -135,6 +135,25 @@ public class AdminController : ControllerBase
 
         InsertAction("Post", $"Deactivated user {userId}", adminId);
     }
+    
+    /// <summary>
+    ///     Checks if a user is deactivated.
+    /// </summary>
+    /// <param name="sessionKey"></param>
+    /// <param name="adminId"></param>
+    /// <param name="userId"></param>
+    /// <returns>
+    ///     A boolean indicating if the user is deactivated.
+    /// </returns>
+    [HttpGet]
+    [Route(nameof(IsDeactivated) + "/{sessionKey}/{adminId}/{userId}")]
+    public IEnumerable<bool> IsDeactivated(int sessionKey, int adminId, int userId)
+    {
+        if (!ValidateSessionKey(sessionKey, adminId).First())
+            throw new Exception("Invalid session key.");
+
+        yield return _context.DeactivatedUsers.Any(du => du.UserId == userId);
+    }
 
     /// <summary>
     ///     Inserts an action made by an admin.
@@ -257,6 +276,31 @@ public class AdminController : ControllerBase
         return from u in _context.Users
             where u.Email == email
             select u;
+    }
+    
+    /// <summary>
+    ///     Gets a user's name by their userToGroup id.
+    /// </summary>
+    /// <param name="sessionKey"></param>
+    /// <param name="adminId"></param>
+    /// <param name="userToGroupId"></param>
+    /// <returns>
+    ///     A user's name by their userToGroup id.
+    /// </returns
+    [HttpGet]
+    [Route(nameof(GetUserNameByUserToGroupId) + "/{sessionKey}/{adminId}/{userToGroupId}")]
+    public IEnumerable<string> GetUserNameByUserToGroupId(int sessionKey, int adminId, int userToGroupId)
+    {
+        if (!ValidateSessionKey(sessionKey, adminId).First())
+            throw new Exception("Invalid session key.");
+
+        var userId = (from utg in _context.UserToGroups
+            where utg.Id == userToGroupId
+            select utg.UserId).FirstOrDefault();
+
+        return from u in _context.Users
+            where u.Id == userId
+            select $"{u.FirstName} {u.LastName}";
     }
 
     /// <summary>
