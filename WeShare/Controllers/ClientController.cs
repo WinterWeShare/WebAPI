@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using WebAPI.Models.EntityFramework;
 using WebAPI.Models.Invoice;
@@ -100,7 +101,9 @@ public class ClientController : ControllerBase
             _context.SaveChanges();
         }
 
-        yield return Encryption.Compare(sessionKey.ToString(), userSession.SessionKey, userSession.Salt);
+        var success = Encryption.Compare(sessionKey.ToString(), userSession.SessionKey, userSession.Salt);
+        Console.WriteLine($"User {userId} has validated session key {sessionKey} with result {success}");
+        yield return success;
     }
 
     /// <summary>
@@ -586,6 +589,52 @@ public class ClientController : ControllerBase
         }
 
         return friendships;
+    }
+    
+    /// <summary>
+    ///     Gets a friend of a user.
+    /// </summary>
+    /// <param name="sessionKey"></param>
+    /// <param name="userId"></param>
+    /// <param name="friendId"></param>
+    /// <returns>
+    ///     A friend of a user of type User.
+    /// </returns>
+    [HttpGet]
+    [Route(nameof(GetFriend) + "/{sessionKey}/{userId}/{friendId}")]
+    public IEnumerable<User> GetFriend(int sessionKey, int userId, int friendId)
+    {
+        if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
+        
+        var friendship = (from f in _context.Friendships
+            where f.UserId == userId && f.FriendId == friendId
+            select f).FirstOrDefault();
+
+        return from u in _context.Users
+            where u.Id == friendship.FriendId
+            select u;
+    }
+    
+    /// <summary>
+    ///     Returns the id of a friend by their email.
+    /// </summary>
+    /// <param name="sessionKey"></param>
+    /// <param name="userId"></param>
+    /// <param name="email"></param>
+    /// <returns>
+    ///     The id of a friend.
+    /// </returns>
+    [HttpGet]
+    [Route(nameof(GetFriendId) + "/{sessionKey}/{userId}/{email}")]
+    public int GetFriendId(int sessionKey, int userId, string email)
+    {
+        if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
+        
+        var friend = (from u in _context.Users
+            where u.Email == email
+            select u).FirstOrDefault();
+
+        return friend?.Id ?? 0;
     }
 
     /// <summary>

@@ -3,7 +3,7 @@ using System.Text;
 
 namespace WebAPI.Models.Security;
 
-public class Encryption
+public abstract class Encryption
 {
     /// <summary>
     ///     Encrypts a password by hashing and salting it.
