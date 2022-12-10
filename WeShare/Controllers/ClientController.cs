@@ -369,7 +369,7 @@ public class ClientController : ControllerBase
             throw new Exception($"Invalid password for user {user.Id}");
         
         yield return (from du in _context.DeactivatedUsers
-            where du.Id == user.Id && du.ByAdmin == false
+            where du.UserId == user.Id && du.ByAdmin == false
             select du).FirstOrDefault() is not null;
     }
 
@@ -399,7 +399,7 @@ public class ClientController : ControllerBase
             throw new Exception($"Invalid password for user {user.Id}");
         
         yield return (from du in _context.DeactivatedUsers
-            where du.Id == user.Id && du.ByAdmin == true
+            where du.UserId == user.Id && du.ByAdmin == true
             select du).FirstOrDefault() is not null;
     }
 
