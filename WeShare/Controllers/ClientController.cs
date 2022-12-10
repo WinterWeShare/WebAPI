@@ -206,6 +206,9 @@ public class ClientController : ControllerBase
             where urc.UserId == user.Id
             select urc;
         if (!userRecoveryCodes.Any()) throw new Exception("User recovery codes not found");
+        
+        if (Encryption.Compare(newPassword, userPassword.Password, userPassword.Salt))
+            throw new Exception("New password cannot be the same as the old password");
 
         if (!ValidatePassword(newPassword)) throw new Exception("Invalid password");
 
@@ -245,6 +248,9 @@ public class ClientController : ControllerBase
             where a.UserId == user.Id
             select a).FirstOrDefault();
         if (userPassword is null) throw new Exception("User password not found");
+        
+        if (Encryption.Compare(newPassword, userPassword.Password, userPassword.Salt))
+            throw new Exception("New password cannot be the same as the old password");
 
         if (!ValidatePassword(newPassword)) throw new Exception("Invalid password");
 
