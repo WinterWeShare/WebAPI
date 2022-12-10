@@ -8,13 +8,13 @@ public abstract class Encryption
     /// <summary>
     ///     Encrypts a password by hashing and salting it.
     /// </summary>
-    /// <param name="password"></param>
-    /// <param name="encryptedPassword"></param>
+    /// <param name="value"></param>
+    /// <param name="encryptedValue"></param>
     /// <param name="salt"></param>
-    public static void Create(string password, out string encryptedPassword, out string salt)
+    public static void Create(string value, out string encryptedValue, out string salt)
     {
         salt = CreateSalt();
-        encryptedPassword = SaltHash(CreateHash(password), salt);
+        encryptedValue = SaltHash(CreateHash(value), salt);
     }
 
     /// <summary>

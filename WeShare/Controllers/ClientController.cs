@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using WebAPI.Models.EntityFramework;
 using WebAPI.Models.Invoice;
@@ -10,7 +9,7 @@ namespace WebAPI.Controllers;
 [Route("[controller]")]
 public class ClientController : ControllerBase
 {
-    private DbWeshareContext _context = new();
+    private DbWeShareContext _context = new();
 
     /// <summary>
     /// </summary>
@@ -36,31 +35,107 @@ public class ClientController : ControllerBase
     }
 
     /// <summary>
+    ///     Validates a given password.
+    ///     Requirements:
+    ///     - At least 8 characters
+    ///     - At least 1 uppercase letter
+    ///     - At least 1 lowercase letter
+    ///     - At least 1 number
+    ///     - At least 1 special character
+    ///     - No spaces
+    /// </summary>
+    /// <param name="password"></param>
+    /// <returns>
+    ///     A boolean indicating if the password is valid.
+    /// </returns>
+    private bool ValidatePassword(string password)
+    {
+        if (password.Length < 8) return false;
+        if (!password.Any(char.IsUpper)) return false;
+        if (!password.Any(char.IsLower)) return false;
+        if (!password.Any(char.IsNumber)) return false;
+        var allowedSpecialCharacters = new List<char>
+        {
+            '@', '#', '$', '%', '^', '&', '*', '(', ')', '-', '_', '+', '=',
+            '{', '}', '[', ']', '|', ':', ';', '<', '>', ',', '.', '?', '/'
+        };
+        if (!password.Any(allowedSpecialCharacters.Contains)) return false;
+        if (password.Contains(" ")) return false;
+        return true;
+    }
+
+    /// <summary>
+    ///     Inserts receipts for a group.
+    /// </summary>
+    /// <param name="groupId"></param>
+    private void InsertReceipts(int groupId)
+    {
+        var userToGroupIds = GetUserToGroupIdsByGroupId(groupId).ToList();
+        // Get the total amount of money that the group has spent.
+        var totalAmount = _context.Payments.Where(p => userToGroupIds.Contains(p.UserToGroupId)).Sum(p => p.Amount);
+        // Get the amount that each user should pay.
+        var amountPerUser = totalAmount / userToGroupIds.Count;
+        // Get every payment for each user even if the user didn't pay anything.
+        var payments = _context.Payments.Where(p => userToGroupIds.Contains(p.UserToGroupId)).ToList();
+        // If payments does not contain a payment for a user, add it with amount 0.
+        foreach (var userToGroupId in userToGroupIds.Where(userToGroupId =>
+                     payments.All(p => p.UserToGroupId != userToGroupId)))
+            payments.Add(new Payment
+            {
+                Amount = 0,
+                UserToGroupId = userToGroupId
+            });
+
+        // Get the amount that each user has paid.
+        foreach (var utg in userToGroupIds)
+        {
+            var totalPaid = payments.Where(p => p.UserToGroupId == utg).Sum(p => p.Amount);
+            _context.Receipts.Add(new Receipt
+            {
+                UserToGroupId = utg,
+                Amount = totalPaid - amountPerUser,
+                Fulfilled = false
+            });
+        }
+
+        _context.SaveChanges();
+    }
+
+
+    /// <summary>
     ///     Sends a mail to the user containing the session id.
     ///     Saves the session id in the database.
     /// </summary>
     /// <param name="email"></param>
+    /// <param name="password"></param>
     [HttpPost]
-    [Route(nameof(CreateSession) + "/{email}")]
-    public void CreateSession(string email)
+    [Route(nameof(CreateSession) + "/{email}/{password}")]
+    public void CreateSession(string email, string password)
     {
-        var user = (from a in _context.Users
-            where a.Email == email
-            select a).FirstOrDefault();
+        var user = (from u in _context.Users
+            where u.Email == email
+            select u).FirstOrDefault();
         if (user is null) throw new Exception("User not found");
 
-        if (_context.UserSessions.Any(a => a.UserId == user.Id && a.Date.Date == DateTime.Now.Date))
+        var userPassword = (from up in _context.UserPasswords
+            where up.UserId == user.Id
+            select up).FirstOrDefault();
+        if (!Encryption.Compare(password, userPassword.Password, userPassword.Salt))
+            throw new Exception("Invalid password");
+
+        if (_context.UserSessions.Any(us => us.UserId == user.Id && us.Date.Date == DateTime.Now.Date))
         {
-            _context.UserSessions.RemoveRange(_context.UserSessions.Where(a => a.UserId == user.Id && a.Date.Date == DateTime.Now.Date));
+            _context.UserSessions.RemoveRange(_context.UserSessions.Where(us =>
+                us.UserId == user.Id && us.Date.Date == DateTime.Now.Date));
             _context.SaveChanges();
         }
 
         // Create the TwoFactor code
-        TwoFactor twoFactor = new(user.Email);
+        EmailHandler emailHandler = new(user.Email);
         // Send it to the user
-        twoFactor.SendCode();
+        emailHandler.SendSessionKey();
         // Encrypt the code
-        Encryption.Create(twoFactor.Code.ToString(), out var sessionKey, out var salt);
+        Encryption.Create(emailHandler.Code.ToString(), out var sessionKey, out var salt);
         // Save the encrypted code and salt
         _context.UserSessions.Add(new UserSession
         {
@@ -94,15 +169,91 @@ public class ClientController : ControllerBase
             Salt = string.Empty
         };
 
-        // If the session is from yesterday, delete it and throw an exception
+        // If the session is from yesterday, delete it
         if (userSession.Date.Date < DateTime.Now.Date)
         {
             _context.UserSessions.Remove(userSession);
             _context.SaveChanges();
+            yield return false;
+        }
+        else
+        {
+            yield return Encryption.Compare(sessionKey.ToString(), userSession.SessionKey, userSession.Salt);
+        }
+    }
+
+    /// <summary>
+    ///     Changes a password with a recovery code.
+    /// </summary>
+    /// <param name="email"></param>
+    /// <param name="recoveryCode"></param>
+    /// <param name="newPassword"></param>
+    [HttpPut]
+    [Route(nameof(UpdatePasswordWithRecoveryCode) + "/{email}/{recoveryCode}/{newPassword}")]
+    public void UpdatePasswordWithRecoveryCode(string email, string recoveryCode, string newPassword)
+    {
+        var user = (from a in _context.Users
+            where a.Email == email
+            select a).FirstOrDefault();
+        if (user is null) throw new Exception("User not found");
+
+        var userPassword = (from a in _context.UserPasswords
+            where a.UserId == user.Id
+            select a).FirstOrDefault();
+        if (userPassword is null) throw new Exception("User password not found");
+
+        var userRecoveryCodes = from urc in _context.UserRecoveryCodes
+            where urc.UserId == user.Id
+            select urc;
+        if (!userRecoveryCodes.Any()) throw new Exception("User recovery codes not found");
+
+        if (!ValidatePassword(newPassword)) throw new Exception("Invalid password");
+
+        foreach (var urc in userRecoveryCodes.ToList())
+        {
+            if (!Encryption.Compare(recoveryCode, urc.Code, urc.Salt) || urc.Used) continue;
+            urc.Used = true;
+            urc.Date = DateTime.Now;
+            Encryption.Create(newPassword, out var password, out var salt);
+            userPassword.Password = password;
+            userPassword.Salt = salt;
+            _context.SaveChanges();
+            return;
         }
 
-        yield return Encryption.Compare(sessionKey.ToString(), userSession.SessionKey, userSession.Salt);
+        throw new Exception("Invalid recovery code");
     }
+
+    /// <summary>
+    ///     Changes a password with the session key.
+    /// </summary>
+    /// <param name="sessionKey"></param>
+    /// <param name="userId"></param>
+    /// <param name="newPassword"></param>
+    [HttpPut]
+    [Route(nameof(UpdatePasswordWithSessionKey) + "/{sessionKey}/{userId}/{newPassword}")]
+    public void UpdatePasswordWithSessionKey(int sessionKey, int userId, string newPassword)
+    {
+        if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
+
+        var user = (from a in _context.Users
+            where a.Id == userId
+            select a).FirstOrDefault();
+        if (user is null) throw new Exception("User not found");
+
+        var userPassword = (from a in _context.UserPasswords
+            where a.UserId == user.Id
+            select a).FirstOrDefault();
+        if (userPassword is null) throw new Exception("User password not found");
+
+        if (!ValidatePassword(newPassword)) throw new Exception("Invalid password");
+
+        Encryption.Create(newPassword, out var password, out var salt);
+        userPassword.Password = password;
+        userPassword.Salt = salt;
+        _context.SaveChanges();
+    }
+
 
     /// <summary>
     ///     Gets an id of an user by their email
@@ -120,7 +271,7 @@ public class ClientController : ControllerBase
             where u.Email == email
             select u.Id).FirstOrDefault();
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         return from u in _context.Users
             where u.Email == email
             select u.Id;
@@ -156,13 +307,13 @@ public class ClientController : ControllerBase
     public IEnumerable<bool> IsOwner(int sessionKey, int userId, int groupId)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         yield return (from g in _context.Groups
             join utg in _context.UserToGroups on g.Id equals utg.GroupId
             where g.Id == groupId && utg.UserId == userId && utg.IsOwner
             select g).FirstOrDefault() is not null;
     }
-    
+
     /// <summary>
     ///     Gets if a user is the owner of a group.
     /// </summary>
@@ -178,7 +329,7 @@ public class ClientController : ControllerBase
     public IEnumerable<bool> IsUserOwner(int sessionKey, int userId, int groupId, int targetId)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         yield return (from g in _context.Groups
             join utg in _context.UserToGroups on g.Id equals utg.GroupId
             where g.Id == groupId && utg.UserId == targetId && utg.IsOwner
@@ -198,7 +349,7 @@ public class ClientController : ControllerBase
     public IEnumerable<bool> IsUserDeactivatedThemselves(int sessionKey, int userId)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-    
+
         yield return (from du in _context.DeactivatedUsers
             where du.Id == userId && du.ByAdmin == false
             select du).FirstOrDefault() is not null;
@@ -217,7 +368,7 @@ public class ClientController : ControllerBase
     public IEnumerable<bool> IsUserDeactivatedByAdmin(int sessionKey, int userId)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         yield return (from du in _context.DeactivatedUsers
             where du.Id == userId && du.ByAdmin
             select du).FirstOrDefault() is not null;
@@ -237,7 +388,7 @@ public class ClientController : ControllerBase
     public IEnumerable<bool> IsInGroup(int sessionKey, int userId, int groupId)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         yield return (from utg in _context.UserToGroups
             where utg.UserId == userId && utg.GroupId == groupId
             select utg).FirstOrDefault() is not null;
@@ -257,7 +408,7 @@ public class ClientController : ControllerBase
     public IEnumerable<bool> IsGroupClosed(int sessionKey, int userId, int groupId)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         yield return (from g in _context.Groups
             where g.Id == groupId && g.Closed
             select g).FirstOrDefault() is not null;
@@ -276,7 +427,7 @@ public class ClientController : ControllerBase
     public IEnumerable<User> GetUser(int sessionKey, int userId)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         return from user in _context.Users
             where user.Id == userId
             select user;
@@ -296,7 +447,7 @@ public class ClientController : ControllerBase
     public IEnumerable<User> GetUsers(int sessionKey, int userId, int groupId)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         return from u in _context.Users
             join utg in _context.UserToGroups
                 on u.Id equals utg.UserId
@@ -318,7 +469,7 @@ public class ClientController : ControllerBase
     public IEnumerable<string> GetUserNameByUserToGroupId(int sessionKey, int userId, int userToGroupId)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         return from u in _context.Users
             join utg in _context.UserToGroups
                 on u.Id equals utg.UserId
@@ -330,12 +481,13 @@ public class ClientController : ControllerBase
     ///     Inserts a new user in the database.
     /// </summary>
     /// <param name="email"></param>
+    /// <param name="password"></param>
     /// <param name="firstName"></param>
     /// <param name="lastName"></param>
     /// <param name="phoneNumber"></param>
     [HttpPost]
-    [Route(nameof(InsertUser) + "/{email}/{firstName}/{lastName}/{phoneNumber}")]
-    public void InsertUser(string email, string firstName, string lastName, string phoneNumber)
+    [Route(nameof(InsertUser) + "/{email}/{password}/{firstName}/{lastName}/{phoneNumber}")]
+    public void InsertUser(string email, string password, string firstName, string lastName, string phoneNumber)
     {
         var user = (from u in _context.Users
             where u.Email == email || u.PhoneNumber == phoneNumber
@@ -343,6 +495,9 @@ public class ClientController : ControllerBase
         if (user is not null)
             throw new Exception($"User with email {email} or phone number {phoneNumber} already exists.");
 
+        if (!ValidatePassword(password)) throw new Exception("Invalid password.");
+
+        // Insert the new user
         _context.Users.Add(new User
         {
             Email = email,
@@ -351,23 +506,41 @@ public class ClientController : ControllerBase
             PhoneNumber = phoneNumber
         });
         _context.SaveChanges();
-        
+
+        // Get the new user
         user = (from u in _context.Users
-            where u.Email == email || u.PhoneNumber == phoneNumber
+            where u.Email == email
             select u).First();
 
-        InsertWallet(user.Id);
-    }
+        // Insert the new password
+        Encryption.Create(password, out var encryptedPassword, out var salt1);
+        _context.UserPasswords.Add(new UserPassword
+        {
+            UserId = user.Id,
+            Password = encryptedPassword,
+            Salt = salt1
+        });
 
-    /// <summary>
-    ///     Inserts a wallet of a random amount of money for a user.
-    /// </summary>
-    /// <param name="userId"></param>
-    private void InsertWallet(int userId)
-    {
+        // Insert the new recovery codes
+        var recoveryCodes = RecoveryCode.Generate(5);
+        recoveryCodes.ForEach(rc =>
+        {
+            Encryption.Create(rc, out var encryptedRecoveryCode, out var salt2);
+            _context.UserRecoveryCodes.Add(new UserRecoveryCode
+            {
+                UserId = user.Id,
+                Code = encryptedRecoveryCode,
+                Salt = salt2,
+                Used = false
+            });
+        });
+        EmailHandler emailHandler = new(user.Email);
+        emailHandler.SendRecoveryCodes(recoveryCodes);
+
+        // Insert the new wallet
         _context.Wallets.Add(new Wallet
         {
-            UserId = userId,
+            UserId = user.Id,
             Balance = new Random().Next(25000, 99999)
         });
         _context.SaveChanges();
@@ -384,10 +557,11 @@ public class ClientController : ControllerBase
     /// <param name="phoneNumber"></param>
     [HttpPut]
     [Route(nameof(UpdateUser) + "/{sessionKey}/{userId}/{email}/{firstName}/{lastName}/{phoneNumber}")]
-    public void UpdateUser(int sessionKey, int userId, string email, string firstName, string lastName, string phoneNumber)
+    public void UpdateUser(int sessionKey, int userId, string email, string firstName, string lastName,
+        string phoneNumber)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         var user = (from u in _context.Users
             where u.Id == userId
             select u).FirstOrDefault();
@@ -413,7 +587,7 @@ public class ClientController : ControllerBase
     public IEnumerable<Group> GetGroups(int sessionKey, int userId)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         return from g in _context.Groups
             join utg in _context.UserToGroups
                 on g.Id equals utg.GroupId
@@ -433,7 +607,7 @@ public class ClientController : ControllerBase
     public void InsertGroup(int sessionKey, int userId, string groupName)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         _context.Groups.Add(new Group
         {
             Name = groupName,
@@ -464,7 +638,7 @@ public class ClientController : ControllerBase
     public IEnumerable<Payment> GetUserPayments(int sessionKey, int userId, int groupId)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         var userToGroupId = GetUserToGroupId(userId, groupId);
         return from payment in _context.Payments
             where payment.UserToGroupId == userToGroupId
@@ -483,7 +657,7 @@ public class ClientController : ControllerBase
     public IEnumerable<Payment> GetGroupPayments(int sessionKey, int userId, int groupId)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         return from payment in _context.Payments
             where GetUserToGroupIdsByGroupId(groupId).Contains(payment.UserToGroupId)
             select payment;
@@ -502,7 +676,7 @@ public class ClientController : ControllerBase
     public void InsertPayment(int sessionKey, int userId, int groupId, string title, double amount)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         if (amount < 1) throw new Exception("Amount must be greater than 0.");
 
         var userToGroupId = GetUserToGroupId(userId, groupId);
@@ -542,9 +716,9 @@ public class ClientController : ControllerBase
     [Route(nameof(GetInvoices) + "/{sessionKey}/{userId}")]
     public IEnumerable<Invoice> GetInvoices(int sessionKey, int userId)
     {
-        if (!ValidateSessionKey(sessionKey, userId).First()) 
+        if (!ValidateSessionKey(sessionKey, userId).First())
             throw new Exception("Invalid session key");
-        
+
         var user = (from u in _context.Users
             where u.Id == userId
             select u).FirstOrDefault();
@@ -552,12 +726,12 @@ public class ClientController : ControllerBase
         List<Invoice> invoices = new();
         var userToGroupIds = from utg in _context.UserToGroups
             join r in _context.Receipts on utg.Id equals r.UserToGroupId
-                where r.Fulfilled && utg.UserId == userId
-                select utg.Id;
-        
+            where r.Fulfilled && utg.UserId == userId
+            select utg.Id;
+
         foreach (var userToGroupId in userToGroupIds)
         {
-            _context = new DbWeshareContext();
+            _context = new DbWeShareContext();
 
             var group = (from g in _context.Groups
                 join utg in _context.UserToGroups
@@ -600,14 +774,14 @@ public class ClientController : ControllerBase
     public IEnumerable<Friendship> GetFriendships(int sessionKey, int userId)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         var friendships = from f in _context.Friendships
             where f.UserId == userId
             select f;
 
         foreach (var friendship in friendships)
         {
-            _context = new DbWeshareContext();
+            _context = new DbWeShareContext();
             friendship.Friend = (from u in _context.Users
                 where u.Id == friendship.FriendId
                 select u).FirstOrDefault() ?? new User();
@@ -615,7 +789,7 @@ public class ClientController : ControllerBase
 
         return friendships;
     }
-    
+
     /// <summary>
     ///     Gets a friend of a user.
     /// </summary>
@@ -630,7 +804,7 @@ public class ClientController : ControllerBase
     public IEnumerable<User> GetFriend(int sessionKey, int userId, int friendId)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         var friendship = (from f in _context.Friendships
             where f.UserId == userId && f.FriendId == friendId
             select f).FirstOrDefault();
@@ -639,7 +813,7 @@ public class ClientController : ControllerBase
             where u.Id == friendship.FriendId
             select u;
     }
-    
+
     /// <summary>
     ///     Returns the id of a friend by their email.
     /// </summary>
@@ -654,7 +828,7 @@ public class ClientController : ControllerBase
     public IEnumerable<int> GetFriendId(int sessionKey, int userId, string email)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         return from u in _context.Users
             where u.Email == email
             select u.Id;
@@ -671,7 +845,7 @@ public class ClientController : ControllerBase
     public void InsertFriendship(int sessionKey, int userId, int friendId)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         var friendship = from f in _context.Friendships
             where f.UserId == userId && f.FriendId == friendId
             select f;
@@ -698,7 +872,7 @@ public class ClientController : ControllerBase
     public void DeleteFriendship(int sessionKey, int userId, int friendId)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         var friendship = (from f in _context.Friendships
             where f.UserId == userId && f.FriendId == friendId
             select f).FirstOrDefault();
@@ -722,13 +896,13 @@ public class ClientController : ControllerBase
     public IEnumerable<Invite> GetInvites(int sessionKey, int userId)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         var invites = from i in _context.Invites
             where i.ReceiverId == userId
             select i;
         foreach (var invite in invites)
         {
-            _context = new DbWeshareContext();
+            _context = new DbWeShareContext();
             // Set the Sender, Group and Receiver properties
             invite.Sender = (from u in _context.Users
                 where u.Id == invite.SenderId
@@ -758,7 +932,7 @@ public class ClientController : ControllerBase
     public IEnumerable<User> GetInvitableFriends(int sessionKey, int userId, int groupId)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         var userToGroupIds = GetUserToGroupIdsByGroupId(groupId).ToList();
 
         var friends = from f in _context.Friendships
@@ -768,7 +942,7 @@ public class ClientController : ControllerBase
         List<User> invitableFriends = new();
         foreach (var friend in friends.ToList())
         {
-            _context = new DbWeshareContext();
+            _context = new DbWeShareContext();
 
             if ((from utg in _context.UserToGroups
                     where utg.UserId == friend.FriendId && userToGroupIds.Contains(utg.Id)
@@ -802,7 +976,7 @@ public class ClientController : ControllerBase
     public void InsertInvite(int sessionKey, int userId, int receiverId, int groupId)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         if (_context.UserToGroups.Any(u => u.UserId == receiverId && u.GroupId == groupId))
             throw new Exception($"User {receiverId} is already in group {groupId}.");
         if (_context.Invites.Any(i => i.SenderId == userId && i.ReceiverId == receiverId && i.GroupId == groupId))
@@ -841,7 +1015,7 @@ public class ClientController : ControllerBase
     public void AcceptInvite(int sessionKey, int userId, int groupId)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         var invite = (from i in _context.Invites
             where i.ReceiverId == userId && i.GroupId == groupId
             select i).FirstOrDefault();
@@ -876,7 +1050,7 @@ public class ClientController : ControllerBase
     public void DeleteInvite(int sessionKey, int userId, int groupId)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         var invite = (from i in _context.Invites
             where i.ReceiverId == userId && i.GroupId == groupId
             select i).FirstOrDefault();
@@ -900,7 +1074,7 @@ public class ClientController : ControllerBase
     public IEnumerable<ToBePaid> GetGroupToBePaids(int sessionKey, int userId, int groupId)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         return from tbp in _context.ToBePaids
             where GetUserToGroupIdsByGroupId(groupId).Contains(tbp.UserToGroupId)
             select tbp;
@@ -920,7 +1094,7 @@ public class ClientController : ControllerBase
     public IEnumerable<ToBePaid> GetUserToBePaid(int sessionKey, int userId, int groupId)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         var userToGroupId = GetUserToGroupId(userId, groupId);
         return from tbp in _context.ToBePaids
             where tbp.UserToGroupId == userToGroupId
@@ -938,7 +1112,7 @@ public class ClientController : ControllerBase
     public void InsertToBePaid(int sessionKey, int userId, int groupId)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         var userToGroupIds = GetUserToGroupIdsByGroupId(groupId).ToList();
 
         var isOwner = from utg in _context.UserToGroups
@@ -987,7 +1161,7 @@ public class ClientController : ControllerBase
     public void ApproveToBePaid(int sessionKey, int userId, int groupId)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         var userToGroupId = GetUserToGroupId(userId, groupId);
         if (userToGroupId == 0)
             throw new Exception($"User {userId} is not in group {groupId}.");
@@ -1008,42 +1182,6 @@ public class ClientController : ControllerBase
             InsertReceipts(groupId);
     }
 
-    /// <summary>
-    ///     Inserts receipts for a group.
-    /// </summary>
-    /// <param name="groupId"></param>
-    private void InsertReceipts(int groupId)
-    {
-        var userToGroupIds = GetUserToGroupIdsByGroupId(groupId).ToList();
-        // Get the total amount of money that the group has spent.
-        var totalAmount = _context.Payments.Where(p => userToGroupIds.Contains(p.UserToGroupId)).Sum(p => p.Amount);
-        // Get the amount that each user should pay.
-        var amountPerUser = totalAmount / userToGroupIds.Count;
-        // Get every payment for each user even if the user didn't pay anything.
-        var payments = _context.Payments.Where(p => userToGroupIds.Contains(p.UserToGroupId)).ToList();
-        // If payments does not contain a payment for a user, add it with amount 0.
-        foreach (var userToGroupId in userToGroupIds.Where(userToGroupId =>
-                     payments.All(p => p.UserToGroupId != userToGroupId)))
-            payments.Add(new Payment
-            {
-                Amount = 0,
-                UserToGroupId = userToGroupId
-            });
-
-        // Get the amount that each user has paid.
-        foreach (var utg in userToGroupIds)
-        {
-            var totalPaid = payments.Where(p => p.UserToGroupId == utg).Sum(p => p.Amount);
-            _context.Receipts.Add(new Receipt
-            {
-                UserToGroupId = utg,
-                Amount = totalPaid - amountPerUser,
-                Fulfilled = false
-            });
-        }
-
-        _context.SaveChanges();
-    }
 
     /// <summary>
     ///     Removes a group's ToBePaid values from the database.
@@ -1056,7 +1194,7 @@ public class ClientController : ControllerBase
     public void DeleteToBePaid(int sessionKey, int userId, int groupId)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         var userToGroupId = GetUserToGroupId(userId, groupId);
         if (userToGroupId == 0)
             throw new Exception($"User {userId} is not in group {groupId}.");
@@ -1090,7 +1228,7 @@ public class ClientController : ControllerBase
     public IEnumerable<Receipt> GetReceipt(int sessionKey, int userId, int groupId)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         var userToGroupId = GetUserToGroupId(userId, groupId);
         return from receipt in _context.Receipts
             where receipt.UserToGroupId == userToGroupId
@@ -1108,7 +1246,7 @@ public class ClientController : ControllerBase
     public void FulfillReceipt(int sessionKey, int userId, int groupId)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         var userToGroupId = GetUserToGroupId(userId, groupId);
         if (userToGroupId is 0)
             throw new Exception($"User {userId} is not in group {groupId}.");
@@ -1159,25 +1297,30 @@ public class ClientController : ControllerBase
     public void DeleteUserFromGroup(int sessionKey, int userId, int groupId, int userToRemoveId)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         var userToGroupId = GetUserToGroupId(userToRemoveId, groupId);
         if (userToGroupId is 0)
             throw new Exception($"User {userToRemoveId} is not in group {groupId}.");
 
         if (_context.Groups.Any(g => g.Id == groupId && g.Closed))
-            throw new Exception($"Cannot remove user {userToRemoveId} from group {groupId} because the group is closed.");
+            throw new Exception(
+                $"Cannot remove user {userToRemoveId} from group {groupId} because the group is closed.");
 
         if (!_context.UserToGroups.Any(utg => utg.UserId == userId && utg.GroupId == groupId && utg.IsOwner))
-            throw new Exception($"Cannot remove user {userToRemoveId} from group {groupId} because user {userId} is not the owner.");
+            throw new Exception(
+                $"Cannot remove user {userToRemoveId} from group {groupId} because user {userId} is not the owner.");
 
         if (_context.Receipts.Any(r => r.UserToGroupId == userToGroupId))
-            throw new Exception($"Cannot remove user {userToRemoveId} from group {groupId} because they have a receipt.");
+            throw new Exception(
+                $"Cannot remove user {userToRemoveId} from group {groupId} because they have a receipt.");
 
         if (_context.ToBePaids.Any(t => t.UserToGroupId == userToGroupId))
-            throw new Exception($"Cannot remove user {userToRemoveId} from group {groupId} because the group is marked as to be paid.");
+            throw new Exception(
+                $"Cannot remove user {userToRemoveId} from group {groupId} because the group is marked as to be paid.");
 
         if (_context.Payments.Any(p => p.UserToGroupId == userToGroupId))
-            throw new Exception($"Cannot remove user {userToRemoveId} from group {groupId} because they have a payment.");
+            throw new Exception(
+                $"Cannot remove user {userToRemoveId} from group {groupId} because they have a payment.");
 
         var userToRemove = from utg in _context.UserToGroups
             where utg.Id == userToGroupId
@@ -1200,7 +1343,7 @@ public class ClientController : ControllerBase
     public IEnumerable<double> GetBalance(int sessionKey, int userId)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         return from w in _context.Wallets
             where w.UserId == userId
             select w.Balance;
@@ -1216,7 +1359,7 @@ public class ClientController : ControllerBase
     public void ActivateUser(int sessionKey, int userId)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         var user = (from du in _context.DeactivatedUsers
             where du.UserId == userId
             select du).FirstOrDefault();
@@ -1241,7 +1384,7 @@ public class ClientController : ControllerBase
     public void DeactivateUser(int sessionKey, int userId)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         if (_context.DeactivatedUsers.Any(du => du.UserId == userId))
             throw new Exception($"User {userId} is already deactivated.");
 
@@ -1268,7 +1411,7 @@ public class ClientController : ControllerBase
     public IEnumerable<double> GetTotalSpent(int sessionKey, int userId, int groupId)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         yield return (from p in _context.Payments
             where GetUserToGroupIdsByGroupId(groupId).Contains(p.UserToGroupId)
             select p.Amount).Sum();
@@ -1288,7 +1431,7 @@ public class ClientController : ControllerBase
     public IEnumerable<double> GetFairShare(int sessionKey, int userId, int groupId)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         var totalSpent = (from p in _context.Payments
             where GetUserToGroupIdsByGroupId(groupId).Contains(p.UserToGroupId)
             select p.Amount).Sum();
@@ -1310,8 +1453,9 @@ public class ClientController : ControllerBase
     public IEnumerable<bool> IsMarkedToBePaid(int sessionKey, int userId, int groupId)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
-        yield return _context.ToBePaids.Any(tbp => GetUserToGroupIdsByGroupId(groupId).Contains(tbp.UserToGroupId) && !tbp.Approved);
+
+        yield return _context.ToBePaids.Any(tbp =>
+            GetUserToGroupIdsByGroupId(groupId).Contains(tbp.UserToGroupId) && !tbp.Approved);
     }
 
     /// <summary>
@@ -1328,9 +1472,10 @@ public class ClientController : ControllerBase
     public IEnumerable<bool> IsApprovedToBePaid(int sessionKey, int userId, int groupId)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         var userToGroupIds = GetUserToGroupIdsByGroupId(groupId);
-        yield return _context.ToBePaids.Count(tbp => userToGroupIds.Contains(tbp.UserToGroupId) && tbp.Approved) == userToGroupIds.Count();
+        yield return _context.ToBePaids.Count(tbp => userToGroupIds.Contains(tbp.UserToGroupId) && tbp.Approved) ==
+                     userToGroupIds.Count();
     }
 
     /// <summary>
@@ -1347,7 +1492,7 @@ public class ClientController : ControllerBase
     public IEnumerable<bool> HasFulfilledReceipt(int sessionKey, int userId, int groupId)
     {
         if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-        
+
         yield return _context.Receipts.Any(r => r.UserToGroupId == GetUserToGroupId(userId, groupId) && r.Fulfilled);
     }
 }

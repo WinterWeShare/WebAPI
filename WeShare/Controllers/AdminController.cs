@@ -10,34 +10,42 @@ namespace WebAPI.Controllers;
 [Route("[controller]")]
 public class AdminController : ControllerBase
 {
-    private DbWeshareContext _context = new();
+    private DbWeShareContext _context = new();
 
     /// <summary>
     ///     Sends a mail to the admin containing the session id.
     ///     Saves the session id in the database.
     /// </summary>
     /// <param name="email"></param>
+    /// <param name="password"></param>
     [HttpPost]
-    [Route(nameof(CreateSession) + "/{email}")]
-    public void CreateSession(string email)
+    [Route(nameof(CreateSession) + "/{email}/{password}")]
+    public void CreateSession(string email, string password)
     {
         var admin = (from a in _context.Admins
             where a.Email == email
             select a).FirstOrDefault();
         if (admin is null) throw new Exception("Admin not found");
 
+        var adminPassword = (from ap in _context.AdminPasswords
+            where ap.AdminId == admin.Id
+            select ap).FirstOrDefault();
+        if (!Encryption.Compare(password, adminPassword.Password, adminPassword.Salt))
+            throw new Exception("Invalid password");
+
         if (_context.AdminSessions.Any(a => a.AdminId == admin.Id && a.Date.Date == DateTime.Now.Date))
         {
-            _context.AdminSessions.RemoveRange(_context.AdminSessions.Where(a => a.AdminId == admin.Id && a.Date.Date == DateTime.Now.Date));
+            _context.AdminSessions.RemoveRange(
+                _context.AdminSessions.Where(a => a.AdminId == admin.Id && a.Date.Date == DateTime.Now.Date));
             _context.SaveChanges();
         }
 
         // Create the TwoFactor code
-        TwoFactor twoFactor = new(admin.Email);
+        EmailHandler emailHandler = new(admin.Email);
         // Send it to the admin
-        twoFactor.SendCode();
+        emailHandler.SendSessionKey();
         // Encrypt the code
-        Encryption.Create(twoFactor.Code.ToString(), out var sessionKey, out var salt);
+        Encryption.Create(emailHandler.Code.ToString(), out var sessionKey, out var salt);
         // Save the encrypted code and salt
         _context.AdminSessions.Add(new AdminSession
         {
@@ -72,14 +80,17 @@ public class AdminController : ControllerBase
             Salt = string.Empty
         };
 
-        // If the session is not a newly created one and is from yesterday, delete it and throw an exception
+        // If the session is from yesterday, delete it
         if (adminSession.Date.Date < DateTime.Now.Date)
         {
             _context.AdminSessions.Remove(adminSession);
             _context.SaveChanges();
+            yield return false;
         }
-
-        yield return Encryption.Compare(sessionKey.ToString(), adminSession.SessionKey, adminSession.Salt);
+        else
+        {
+            yield return Encryption.Compare(sessionKey.ToString(), adminSession.SessionKey, adminSession.Salt);
+        }
     }
 
     /// <summary>
@@ -98,7 +109,7 @@ public class AdminController : ControllerBase
         var user = (from du in _context.DeactivatedUsers
             where du.UserId == userId
             select du).FirstOrDefault();
-        
+
         if (user is null)
             throw new Exception($"User {userId} is not deactivated.");
 
@@ -135,7 +146,7 @@ public class AdminController : ControllerBase
 
         InsertAction("Post", $"Deactivated user {userId}", adminId);
     }
-    
+
     /// <summary>
     ///     Checks if a user is deactivated.
     /// </summary>
@@ -277,7 +288,7 @@ public class AdminController : ControllerBase
             where u.Email == email
             select u;
     }
-    
+
     /// <summary>
     ///     Gets a user's name by their userToGroup id.
     /// </summary>
@@ -355,7 +366,8 @@ public class AdminController : ControllerBase
     /// <param name="phoneNumber"></param>
     [HttpPut]
     [Route(nameof(UpdateUser) + "/{sessionKey}/{adminId}/{userId}/{email}/{firstName}/{lastName}/{phoneNumber}")]
-    public void UpdateUser(int sessionKey, int adminId, int userId, string email, string firstName, string lastName, string phoneNumber)
+    public void UpdateUser(int sessionKey, int adminId, int userId, string email, string firstName, string lastName,
+        string phoneNumber)
     {
         if (!ValidateSessionKey(sessionKey, adminId).First())
             throw new Exception("Invalid session key.");
@@ -465,12 +477,12 @@ public class AdminController : ControllerBase
         List<Invoice> invoices = new();
         var userToGroupIds = from utg in _context.UserToGroups
             join r in _context.Receipts on utg.Id equals r.UserToGroupId
-                where r.Fulfilled && utg.UserId == userId
-                select utg.Id;
-        
+            where r.Fulfilled && utg.UserId == userId
+            select utg.Id;
+
         foreach (var userToGroupId in userToGroupIds)
         {
-            _context = new DbWeshareContext();
+            _context = new DbWeShareContext();
 
             var group = (from g in _context.Groups
                 join utg in _context.UserToGroups

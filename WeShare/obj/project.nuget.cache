@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "OtnZxjxRAV4PM5D/jcKlxoUxLiwNNFl1h8c/gZtNIGKJC8RPyJLM8SVNyyjOcVxWhFUMQMfrV9kCCV3n+ExIYQ==",
+  "dgSpecHash": "eEqkPTjMw0DEmN9op9NUyVpfLZW35Uj0IHldXjqT7FeZe1BffqHuNKWRUwBn4HycLQqjjHSwaUHX7F5nisoOcA==",
   "success": true,
   "projectFilePath": "C:\\Users\\Marpond\\RiderProjects\\WebAPI\\WeShare\\WebAPI.csproj",
   "expectedPackageFiles": [
@@ -66,7 +66,6 @@
     "C:\\Users\\Marpond\\.nuget\\packages\\system.resources.resourcemanager\\4.3.0\\system.resources.resourcemanager.4.3.0.nupkg.sha512",
     "C:\\Users\\Marpond\\.nuget\\packages\\system.runtime\\4.3.0\\system.runtime.4.3.0.nupkg.sha512",
     "C:\\Users\\Marpond\\.nuget\\packages\\system.runtime.caching\\5.0.0\\system.runtime.caching.5.0.0.nupkg.sha512",
-    "C:\\Users\\Marpond\\.nuget\\packages\\system.runtime.compilerservices.unsafe\\6.0.0\\system.runtime.compilerservices.unsafe.6.0.0.nupkg.sha512",
     "C:\\Users\\Marpond\\.nuget\\packages\\system.security.accesscontrol\\5.0.0\\system.security.accesscontrol.5.0.0.nupkg.sha512",
     "C:\\Users\\Marpond\\.nuget\\packages\\system.security.cryptography.cng\\5.0.0\\system.security.cryptography.cng.5.0.0.nupkg.sha512",
     "C:\\Users\\Marpond\\.nuget\\packages\\system.security.cryptography.protecteddata\\5.0.0\\system.security.cryptography.protecteddata.5.0.0.nupkg.sha512",

@@ -22,6 +22,10 @@ public class User
 
     public virtual ICollection<Invite> InviteSenders { get; } = new List<Invite>();
 
+    public virtual ICollection<UserPassword> UserPasswords { get; } = new List<UserPassword>();
+
+    public virtual ICollection<UserRecoveryCode> UserRecoveryCodes { get; } = new List<UserRecoveryCode>();
+
     public virtual ICollection<UserSession> UserSessions { get; } = new List<UserSession>();
 
     public virtual ICollection<UserToGroup> UserToGroups { get; } = new List<UserToGroup>();

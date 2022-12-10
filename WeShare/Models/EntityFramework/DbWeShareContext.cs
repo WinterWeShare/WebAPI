@@ -2,13 +2,13 @@
 
 namespace WebAPI.Models.EntityFramework;
 
-public partial class DbWeshareContext : DbContext
+public partial class DbWeShareContext : DbContext
 {
-    public DbWeshareContext()
+    public DbWeShareContext()
     {
     }
 
-    public DbWeshareContext(DbContextOptions<DbWeshareContext> options)
+    public DbWeShareContext(DbContextOptions<DbWeShareContext> options)
         : base(options)
     {
     }
@@ -16,6 +16,8 @@ public partial class DbWeshareContext : DbContext
     public virtual DbSet<Action> Actions { get; set; }
 
     public virtual DbSet<Admin> Admins { get; set; }
+
+    public virtual DbSet<AdminPassword> AdminPasswords { get; set; }
 
     public virtual DbSet<AdminSession> AdminSessions { get; set; }
 
@@ -34,6 +36,10 @@ public partial class DbWeshareContext : DbContext
     public virtual DbSet<ToBePaid> ToBePaids { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
+
+    public virtual DbSet<UserPassword> UserPasswords { get; set; }
+
+    public virtual DbSet<UserRecoveryCode> UserRecoveryCodes { get; set; }
 
     public virtual DbSet<UserSession> UserSessions { get; set; }
 
@@ -89,6 +95,21 @@ public partial class DbWeshareContext : DbContext
             entity.Property(e => e.LastName)
                 .HasMaxLength(50)
                 .IsUnicode(false);
+        });
+
+        modelBuilder.Entity<AdminPassword>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__AdminPas__3214EC2790110F0D");
+
+            entity.Property(e => e.Id).HasColumnName("ID");
+            entity.Property(e => e.AdminId).HasColumnName("AdminID");
+            entity.Property(e => e.Password).IsUnicode(false);
+            entity.Property(e => e.Salt).IsUnicode(false);
+
+            entity.HasOne(d => d.Admin).WithMany(p => p.AdminPasswords)
+                .HasForeignKey(d => d.AdminId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__AdminPass__Admin__534D60F1");
         });
 
         modelBuilder.Entity<AdminSession>(entity =>
@@ -255,6 +276,37 @@ public partial class DbWeshareContext : DbContext
             entity.Property(e => e.PhoneNumber)
                 .HasMaxLength(50)
                 .IsUnicode(false);
+        });
+
+        modelBuilder.Entity<UserPassword>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__UserPass__3214EC2773BC9871");
+
+            entity.Property(e => e.Id).HasColumnName("ID");
+            entity.Property(e => e.Password).IsUnicode(false);
+            entity.Property(e => e.Salt).IsUnicode(false);
+            entity.Property(e => e.UserId).HasColumnName("UserID");
+
+            entity.HasOne(d => d.User).WithMany(p => p.UserPasswords)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__UserPassw__UserI__5629CD9C");
+        });
+
+        modelBuilder.Entity<UserRecoveryCode>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__UserReco__3214EC278F55CACF");
+
+            entity.Property(e => e.Id).HasColumnName("ID");
+            entity.Property(e => e.Code).IsUnicode(false);
+            entity.Property(e => e.Date).HasColumnType("datetime");
+            entity.Property(e => e.Salt).IsUnicode(false);
+            entity.Property(e => e.UserId).HasColumnName("UserID");
+
+            entity.HasOne(d => d.User).WithMany(p => p.UserRecoveryCodes)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__UserRecov__UserI__59063A47");
         });
 
         modelBuilder.Entity<UserSession>(entity =>

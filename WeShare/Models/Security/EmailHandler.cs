@@ -5,11 +5,11 @@ using Newtonsoft.Json.Linq;
 
 namespace WebAPI.Models.Security;
 
-public class TwoFactor
+public class EmailHandler
 {
     private readonly Account _account;
 
-    public TwoFactor(string receiver)
+    public EmailHandler(string receiver)
     {
         // Get the project path, go up by three directories to get to the root of the project
         ProjectPath = Directory.GetCurrentDirectory();
@@ -40,7 +40,7 @@ public class TwoFactor
         return JObject.Parse(location);
     }
 
-    public void SendCode()
+    public void SendSessionKey()
     {
         var mail = new MailMessage();
         var smtpServer = new SmtpClient("smtp.gmail.com");
@@ -51,6 +51,23 @@ public class TwoFactor
 Ip: {IpAddress}Location: {Location["zip"]} {Location["city"]}, {Location["country"]}, {Location["regionName"]}
 At: {DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss")}.
 If this was you, please enter the following code: {Code}";
+        mail.Body = body;
+        smtpServer.Port = 587;
+        smtpServer.Credentials = new NetworkCredential($"{_account.Email}", $"{_account.Password}");
+        smtpServer.EnableSsl = true;
+        smtpServer.Send(mail);
+    }
+
+    public void SendRecoveryCodes(List<string> recoveryCodes)
+    {
+        var mail = new MailMessage();
+        var smtpServer = new SmtpClient("smtp.gmail.com");
+        mail.From = new MailAddress(_account.Email);
+        mail.To.Add(Receiver);
+        mail.Subject = "Two Factor Authentication Recovery Codes";
+        var body = @$"Thank you for registering on our website.
+Here are your recovery codes in case you forget your password, please keep them safe.
+{string.Join("\n", recoveryCodes)}";
         mail.Body = body;
         smtpServer.Port = 587;
         smtpServer.Credentials = new NetworkCredential($"{_account.Email}", $"{_account.Password}");

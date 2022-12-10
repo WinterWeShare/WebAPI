@@ -12,5 +12,7 @@ public class Admin
 
     public virtual ICollection<Action> Actions { get; } = new List<Action>();
 
+    public virtual ICollection<AdminPassword> AdminPasswords { get; } = new List<AdminPassword>();
+
     public virtual ICollection<AdminSession> AdminSessions { get; } = new List<AdminSession>();
 }
