@@ -115,13 +115,13 @@ public class ClientController : ControllerBase
         var user = (from u in _context.Users
             where u.Email == email
             select u).FirstOrDefault();
-        if (user is null) throw new Exception("User not found");
+        if (user is null) throw new Exception($"User with email {email} does not exist.");
 
         var userPassword = (from up in _context.UserPasswords
             where up.UserId == user.Id
             select up).FirstOrDefault();
         if (!Encryption.Compare(password, userPassword.Password, userPassword.Salt))
-            throw new Exception("Invalid password");
+            throw new Exception($"Invalid password for user {user.Id}");
 
         if (_context.UserSessions.Any(us => us.UserId == user.Id && us.Date.Date == DateTime.Now.Date))
         {
@@ -346,38 +346,60 @@ public class ClientController : ControllerBase
     /// <summary>
     ///     Checks if the user is deactivated.
     /// </summary>
-    /// <param name="sessionKey"></param>
-    /// <param name="userId" />
+    /// <param name="email" />
+    /// <param name="password" />
     /// <returns>
     ///     A bool value representing if the user is deactivated
     /// </returns>
     [HttpGet]
-    [Route(nameof(IsUserDeactivatedThemselves) + "/{sessionKey}/{userId}")]
-    public IEnumerable<bool> IsUserDeactivatedThemselves(int sessionKey, int userId)
+    [Route(nameof(IsUserDeactivatedThemselves) + "/{email}/{password}")]
+    public IEnumerable<bool> IsUserDeactivatedThemselves(string email, string password)
     {
-        if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-
+        var user = (from u in _context.Users
+            where u.Email == email
+            select u).FirstOrDefault();
+        if (user is null) throw new Exception($"User with email {email} not found");
+        
+        var userPassword = (from up in _context.UserPasswords
+            where up.UserId == user.Id
+            select up).FirstOrDefault();
+        if (userPassword is null) throw new Exception($"User {user.Id} does not have a password");
+        
+        if (!Encryption.Compare(password, userPassword.Password, userPassword.Salt))
+            throw new Exception($"Invalid password for user {user.Id}");
+        
         yield return (from du in _context.DeactivatedUsers
-            where du.Id == userId && du.ByAdmin == false
+            where du.Id == user.Id && du.ByAdmin == false
             select du).FirstOrDefault() is not null;
     }
 
     /// <summary>
     ///     Checks if a user is deactivated by an admin.
     /// </summary>
-    /// <param name="sessionKey"></param>
-    /// <param name="userId" />
+    /// <param name="email" />
+    /// <param name="password" />
     /// <returns>
     ///     A bool value representing if the user is deactivated by an admin.
     /// </returns>
     [HttpGet]
-    [Route(nameof(IsUserDeactivatedByAdmin) + "/{sessionKey}/{userId}")]
-    public IEnumerable<bool> IsUserDeactivatedByAdmin(int sessionKey, int userId)
+    [Route(nameof(IsUserDeactivatedByAdmin) + "/{email}/{password}")]
+    public IEnumerable<bool> IsUserDeactivatedByAdmin(string email, string password)
     {
-        if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-
+        var user = (from u in _context.Users
+            where u.Email == email
+            select u).FirstOrDefault();
+        if (user is null) throw new Exception($"User with email {email} not found");
+        
+        var userPassword = (from up in _context.UserPasswords
+            where up.UserId == user.Id
+            select up).FirstOrDefault();
+        if (userPassword is null) throw new Exception($"User {user.Id} does not have a password");
+        
+        if (!Encryption.Compare(password, userPassword.Password, userPassword.Salt))
+            throw new Exception($"Invalid password for user {user.Id}");
+        
         yield return (from du in _context.DeactivatedUsers
-            where du.Id == userId && du.ByAdmin
+            where du.Id == user.Id && du.ByAdmin == true
             select du).FirstOrDefault() is not null;
     }
 
@@ -1359,25 +1381,37 @@ public class ClientController : ControllerBase
     /// <summary>
     ///     Activates a user.
     /// </summary>
-    /// <param name="sessionKey"></param>
-    /// <param name="userId"></param>
+    /// <param name="email"></param>
+    /// <param name="password"></param>
     [HttpDelete]
-    [Route(nameof(ActivateUser) + "/{sessionKey}/{userId}")]
-    public void ActivateUser(int sessionKey, int userId)
+    [Route(nameof(ActivateUser) + "/{email}/{password}")]
+    public void ActivateUser(string email, string password)
     {
-        if (!ValidateSessionKey(sessionKey, userId).First()) throw new Exception("Invalid session key");
-
-        var user = (from du in _context.DeactivatedUsers
-            where du.UserId == userId
-            select du).FirstOrDefault();
-
+        var user = (from u in _context.Users
+            where u.Email == email
+            select u).FirstOrDefault();
         if (user is null)
-            throw new Exception($"User {userId} is not deactivated.");
+            throw new Exception($"User with email {email} does not exist.");
+        
+        var userPassword = (from up in _context.UserPasswords
+            where up.UserId == user.Id
+            select up).FirstOrDefault();
+        if (userPassword is null)
+            throw new Exception($"User {user.Id} does not have a password.");
+        
+        if (Encryption.Compare(password, userPassword.Password, userPassword.Salt))
+            throw new Exception($"Invalid password for user {user.Id}.");
+        
+        var deactivatedUser = (from du in _context.DeactivatedUsers
+            where du.UserId == user.Id
+            select du).FirstOrDefault();
+        if (deactivatedUser is null)
+            throw new Exception($"User {user.Id} is not deactivated.");
 
-        if (user.ByAdmin)
-            throw new Exception($"User {userId} is deactivated by an admin and cannot activate themselves.");
+        if (deactivatedUser.ByAdmin)
+            throw new Exception($"User {user.Id} is deactivated by an admin and cannot activate themselves.");
 
-        _context.DeactivatedUsers.Remove(user);
+        _context.DeactivatedUsers.Remove(deactivatedUser);
         _context.SaveChanges();
     }
 
