@@ -22,15 +22,15 @@ public abstract class Encryption
     ///     Always use the same salt that was used to encrypt the password.
     /// </summary>
     /// <param name="input"></param>
-    /// <param name="encryptedPassword"></param>
+    /// <param name="encryptedValue"></param>
     /// <param name="salt"></param>
     /// <returns>
     ///     A boolean value indicating whether the input matches the encrypted password.
     /// </returns>
-    public static bool Compare(string input, string encryptedPassword, string salt)
+    public static bool Compare(string input, string encryptedValue, string salt)
     {
         var saltedHashedInput = SaltHash(CreateHash(input), salt);
-        return saltedHashedInput == encryptedPassword;
+        return saltedHashedInput == encryptedValue;
     }
 
     private static string CreateHash(string password)

@@ -212,9 +212,10 @@ public class ClientController : ControllerBase
 
         if (!ValidatePassword(newPassword)) throw new Exception("Invalid password");
 
-        foreach (var urc in userRecoveryCodes.ToList())
+        // If the recovery code is valid and hasn't been used yet
+        foreach (var urc in userRecoveryCodes.ToList()
+                     .Where(urc => Encryption.Compare(recoveryCode, urc.Code, urc.Salt) && !urc.Used))
         {
-            if (!Encryption.Compare(recoveryCode, urc.Code, urc.Salt) || urc.Used) continue;
             urc.Used = true;
             urc.Date = DateTime.Now;
             Encryption.Create(newPassword, out var password, out var salt);
