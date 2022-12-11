@@ -789,6 +789,33 @@ public class ClientController : ControllerBase
 
         return invoices;
     }
+    
+    /// <summary>
+        ///     Gets a formatted invoice.
+        /// </summary>
+        /// <param name="sessionKey"></param>
+        /// <param name="userId"></param>
+        /// <param name="receiptId"></param>
+        /// <returns>
+        ///     A formatted invoice.
+        /// </returns>
+        [HttpGet]
+        [Route(nameof(GetFormattedInvoiceBase64) + "/{sessionKey}/{userId}/{receiptId}")]
+        public IEnumerable<string> GetFormattedInvoiceBase64(int sessionKey, int userId, int receiptId)
+        {
+            if (!ValidateSessionKey(sessionKey, userId).First())
+                throw new Exception("Invalid session key.");
+            
+            var invoice = GetInvoices(sessionKey, userId)
+                .FirstOrDefault(i => i.Receipt.Id == receiptId);
+            
+            if (invoice == null)
+                throw new Exception("Invalid receipt id.");
+    
+            var pdfBytes = PdfManager.FormatInvoice(invoice);
+            yield return Convert.ToBase64String(pdfBytes);
+        }
+
 
     /// <summary>
     ///     Gets all the friendships of a user.
@@ -1399,7 +1426,7 @@ public class ClientController : ControllerBase
         if (userPassword is null)
             throw new Exception($"User {user.Id} does not have a password.");
         
-        if (Encryption.Compare(password, userPassword.Password, userPassword.Salt))
+        if (!Encryption.Compare(password, userPassword.Password, userPassword.Salt))
             throw new Exception($"Invalid password for user {user.Id}.");
         
         var deactivatedUser = (from du in _context.DeactivatedUsers

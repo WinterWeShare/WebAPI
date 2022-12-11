@@ -579,6 +579,37 @@ public class AdminController : ControllerBase
 
         return users.Select(user => GetUserInvoices(sessionKey, adminId, user.Id).First()).ToList();
     }
+    
+    /// <summary>
+    ///     Gets a formatted invoice.
+    /// </summary>
+    /// <param name="sessionKey"></param>
+    /// <param name="adminId"></param>
+    /// <param name="receiptId"></param>
+    /// <returns>
+    ///     A formatted invoice.
+    /// </returns>
+    [HttpGet]
+    [Route(nameof(GetFormattedInvoiceBase64) + "/{sessionKey}/{adminId}/{receiptId}")]
+    public IEnumerable<string> GetFormattedInvoiceBase64(int sessionKey, int adminId, int receiptId)
+    {
+        if (!ValidateSessionKey(sessionKey, adminId).First())
+            throw new Exception("Invalid session key.");
+        
+        var userId = (from r in _context.Receipts
+            join utg in _context.UserToGroups on r.UserToGroupId equals utg.Id
+            where r.Id == receiptId
+            select utg.UserId).FirstOrDefault();
+
+        var invoice = GetUserInvoices(sessionKey, adminId, userId)
+            .FirstOrDefault(i => i.Receipt.Id == receiptId);
+        
+        if (invoice == null)
+            throw new Exception("Invalid receipt id.");
+
+        var pdfBytes = PdfManager.FormatInvoice(invoice);
+        yield return Convert.ToBase64String(pdfBytes);
+    }
 
     /// <summary>
     ///     Closes a group.

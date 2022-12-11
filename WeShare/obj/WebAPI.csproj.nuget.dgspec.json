@@ -40,6 +40,14 @@
         "net7.0": {
           "targetAlias": "net7.0",
           "dependencies": {
+            "IronPdf": {
+              "target": "Package",
+              "version": "[2022.11.10347, )"
+            },
+            "IronPdf.Native.Chrome.Windows": {
+              "target": "Package",
+              "version": "[2022.11.10299, )"
+            },
             "Microsoft.EntityFrameworkCore": {
               "target": "Package",
               "version": "[7.0.0, )"
