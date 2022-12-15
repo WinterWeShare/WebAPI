@@ -44,6 +44,10 @@
               "target": "Package",
               "version": "[2022.11.10347, )"
             },
+            "IronPdf.Native.Chrome.Linux": {
+              "target": "Package",
+              "version": "[2022.11.10299, )"
+            },
             "IronPdf.Native.Chrome.Windows": {
               "target": "Package",
               "version": "[2022.11.10299, )"

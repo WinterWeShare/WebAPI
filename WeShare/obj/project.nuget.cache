@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "1xkXFwHQud5Rs/YUWVKbbsvS3FCSE0pHmG/4vPQcwNewTnw1ET3W19PihjquFRlxo4zKhNYzLVikbPAKWcXjLA==",
+  "dgSpecHash": "gtJAur1OE+jkgBZxiccBeuQRiLpybSRb1SrlnlYh7noIcaU/P9TOldsBrFpJSXYz5RRUX31Nw+IJVzb9ZqWHKQ==",
   "success": true,
   "projectFilePath": "C:\\Users\\Marpond\\RiderProjects\\WebAPI\\WeShare\\WebAPI.csproj",
   "expectedPackageFiles": [
@@ -8,6 +8,7 @@
     "C:\\Users\\Marpond\\.nuget\\packages\\azure.identity\\1.6.0\\azure.identity.1.6.0.nupkg.sha512",
     "C:\\Users\\Marpond\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
     "C:\\Users\\Marpond\\.nuget\\packages\\ironpdf\\2022.11.10347\\ironpdf.2022.11.10347.nupkg.sha512",
+    "C:\\Users\\Marpond\\.nuget\\packages\\ironpdf.native.chrome.linux\\2022.11.10299\\ironpdf.native.chrome.linux.2022.11.10299.nupkg.sha512",
     "C:\\Users\\Marpond\\.nuget\\packages\\ironpdf.native.chrome.windows\\2022.11.10299\\ironpdf.native.chrome.windows.2022.11.10299.nupkg.sha512",
     "C:\\Users\\Marpond\\.nuget\\packages\\ironpdf.slim\\2022.11.10347\\ironpdf.slim.2022.11.10347.nupkg.sha512",
     "C:\\Users\\Marpond\\.nuget\\packages\\microsoft.bcl.asyncinterfaces\\1.1.1\\microsoft.bcl.asyncinterfaces.1.1.1.nupkg.sha512",

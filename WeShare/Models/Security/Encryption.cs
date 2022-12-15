@@ -65,7 +65,7 @@ public abstract class Encryption
         return Convert.ToBase64String(buff);
     }
 
-    private static string SaltHash(string hash, string? salt)
+    private static string SaltHash(string hash, string salt)
     {
         var hashBytes = Convert.FromBase64String(hash);
         var saltBytes = Convert.FromBase64String(salt);

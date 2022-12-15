@@ -72,6 +72,292 @@
           "lib/net6.0/_._": {}
         }
       },
+      "IronPdf.Native.Chrome.Linux/2022.11.10299": {
+        "type": "package",
+        "compile": {
+          "lib/netstandard/_._": {}
+        },
+        "runtime": {
+          "lib/netstandard/_._": {}
+        },
+        "build": {
+          "build/IronPdf.Native.Chrome.Linux.targets": {}
+        },
+        "runtimeTargets": {
+          "runtimes/linux-x64/native/IronCefSubprocess": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/IronInterop.so": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/IronPdf.Native.Chrome.deployment.json": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/chrome_100_percent.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/chrome_200_percent.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/icudtl.dat": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/libEGL.so": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/libGLESv2.so": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/libcef.so": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/libvk_swiftshader.so": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/af.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/am.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/ar.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/bg.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/bn.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/ca.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/cs.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/da.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/de.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/el.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/en-GB.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/en-US.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/es-419.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/es.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/et.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/fa.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/fi.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/fil.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/fr.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/gu.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/he.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/hi.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/hr.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/hu.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/id.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/it.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/ja.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/kn.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/ko.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/lt.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/lv.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/ml.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/mr.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/ms.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/nb.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/nl.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/pl.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/pt-BR.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/pt-PT.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/ro.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/ru.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/sk.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/sl.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/sr.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/sv.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/sw.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/ta.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/te.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/th.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/tr.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/uk.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/ur.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/vi.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/zh-CN.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/locales/zh-TW.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/resources.pak": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/snapshot_blob.bin": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          },
+          "runtimes/linux-x64/native/v8_context_snapshot.bin": {
+            "assetType": "native",
+            "rid": "linux-x64"
+          }
+        }
+      },
       "IronPdf.Native.Chrome.Windows/2022.11.10299": {
         "type": "package",
         "compile": {
@@ -1999,6 +2285,89 @@
         "lib/netcoreapp2.0/_._",
         "lib/netcoreapp3.1/_._",
         "lib/netstandard2.0/_._"
+      ]
+    },
+    "IronPdf.Native.Chrome.Linux/2022.11.10299": {
+      "sha512": "nIKfET6ct1FZcF9JeCtcadZm0HEXfrlFm8jgwNz86P90sY2jAcdiRzFRzyZ4ct+6CtNS1ZEul/kvmS9qOO3LsA==",
+      "type": "package",
+      "path": "ironpdf.native.chrome.linux/2022.11.10299",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE.txt",
+        "build/IronPdf.Native.Chrome.Linux.targets",
+        "images/iron-logo-128.png",
+        "ironpdf.native.chrome.linux.2022.11.10299.nupkg.sha512",
+        "ironpdf.native.chrome.linux.nuspec",
+        "lib/netstandard/_._",
+        "runtimes/linux-x64/native/IronCefSubprocess",
+        "runtimes/linux-x64/native/IronInterop.so",
+        "runtimes/linux-x64/native/IronPdf.Native.Chrome.deployment.json",
+        "runtimes/linux-x64/native/chrome_100_percent.pak",
+        "runtimes/linux-x64/native/chrome_200_percent.pak",
+        "runtimes/linux-x64/native/icudtl.dat",
+        "runtimes/linux-x64/native/libEGL.so",
+        "runtimes/linux-x64/native/libGLESv2.so",
+        "runtimes/linux-x64/native/libcef.so",
+        "runtimes/linux-x64/native/libvk_swiftshader.so",
+        "runtimes/linux-x64/native/locales/af.pak",
+        "runtimes/linux-x64/native/locales/am.pak",
+        "runtimes/linux-x64/native/locales/ar.pak",
+        "runtimes/linux-x64/native/locales/bg.pak",
+        "runtimes/linux-x64/native/locales/bn.pak",
+        "runtimes/linux-x64/native/locales/ca.pak",
+        "runtimes/linux-x64/native/locales/cs.pak",
+        "runtimes/linux-x64/native/locales/da.pak",
+        "runtimes/linux-x64/native/locales/de.pak",
+        "runtimes/linux-x64/native/locales/el.pak",
+        "runtimes/linux-x64/native/locales/en-GB.pak",
+        "runtimes/linux-x64/native/locales/en-US.pak",
+        "runtimes/linux-x64/native/locales/es-419.pak",
+        "runtimes/linux-x64/native/locales/es.pak",
+        "runtimes/linux-x64/native/locales/et.pak",
+        "runtimes/linux-x64/native/locales/fa.pak",
+        "runtimes/linux-x64/native/locales/fi.pak",
+        "runtimes/linux-x64/native/locales/fil.pak",
+        "runtimes/linux-x64/native/locales/fr.pak",
+        "runtimes/linux-x64/native/locales/gu.pak",
+        "runtimes/linux-x64/native/locales/he.pak",
+        "runtimes/linux-x64/native/locales/hi.pak",
+        "runtimes/linux-x64/native/locales/hr.pak",
+        "runtimes/linux-x64/native/locales/hu.pak",
+        "runtimes/linux-x64/native/locales/id.pak",
+        "runtimes/linux-x64/native/locales/it.pak",
+        "runtimes/linux-x64/native/locales/ja.pak",
+        "runtimes/linux-x64/native/locales/kn.pak",
+        "runtimes/linux-x64/native/locales/ko.pak",
+        "runtimes/linux-x64/native/locales/lt.pak",
+        "runtimes/linux-x64/native/locales/lv.pak",
+        "runtimes/linux-x64/native/locales/ml.pak",
+        "runtimes/linux-x64/native/locales/mr.pak",
+        "runtimes/linux-x64/native/locales/ms.pak",
+        "runtimes/linux-x64/native/locales/nb.pak",
+        "runtimes/linux-x64/native/locales/nl.pak",
+        "runtimes/linux-x64/native/locales/pl.pak",
+        "runtimes/linux-x64/native/locales/pt-BR.pak",
+        "runtimes/linux-x64/native/locales/pt-PT.pak",
+        "runtimes/linux-x64/native/locales/ro.pak",
+        "runtimes/linux-x64/native/locales/ru.pak",
+        "runtimes/linux-x64/native/locales/sk.pak",
+        "runtimes/linux-x64/native/locales/sl.pak",
+        "runtimes/linux-x64/native/locales/sr.pak",
+        "runtimes/linux-x64/native/locales/sv.pak",
+        "runtimes/linux-x64/native/locales/sw.pak",
+        "runtimes/linux-x64/native/locales/ta.pak",
+        "runtimes/linux-x64/native/locales/te.pak",
+        "runtimes/linux-x64/native/locales/th.pak",
+        "runtimes/linux-x64/native/locales/tr.pak",
+        "runtimes/linux-x64/native/locales/uk.pak",
+        "runtimes/linux-x64/native/locales/ur.pak",
+        "runtimes/linux-x64/native/locales/vi.pak",
+        "runtimes/linux-x64/native/locales/zh-CN.pak",
+        "runtimes/linux-x64/native/locales/zh-TW.pak",
+        "runtimes/linux-x64/native/resources.pak",
+        "runtimes/linux-x64/native/snapshot_blob.bin",
+        "runtimes/linux-x64/native/v8_context_snapshot.bin"
       ]
     },
     "IronPdf.Native.Chrome.Windows/2022.11.10299": {
@@ -4617,6 +4986,7 @@
   "projectFileDependencyGroups": {
     "net7.0": [
       "IronPdf >= 2022.11.10347",
+      "IronPdf.Native.Chrome.Linux >= 2022.11.10299",
       "IronPdf.Native.Chrome.Windows >= 2022.11.10299",
       "Microsoft.EntityFrameworkCore >= 7.0.0",
       "Microsoft.EntityFrameworkCore.SqlServer >= 7.0.0",
@@ -4667,6 +5037,10 @@
           "IronPdf": {
             "target": "Package",
             "version": "[2022.11.10347, )"
+          },
+          "IronPdf.Native.Chrome.Linux": {
+            "target": "Package",
+            "version": "[2022.11.10299, )"
           },
           "IronPdf.Native.Chrome.Windows": {
             "target": "Package",
