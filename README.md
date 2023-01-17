@@ -2,14 +2,17 @@
 The main backend requirement for the third semester exam.
 
 ## General info
-Both the WebClient and WpfAdmin has to use http requests through the API to communicate with the database.
+The source code for the API that is hosted on the Hetzner VPS. Both the Admin and Client application use this API through http requests to communicate with the database. The API utilizes the Entity Framework to interact with the database. Additionally, session-based authentication has been implemented for added security.
 
-## Structure
-Two separate controllers have been made for these applications, each containing the appropriate methods and nothing more.
-Inside the models class, there is:
-1. ./EntityFramework:
-    - Contains a 1:1 replica of the database tables and a database context class.
-2. ./ Invoice
-    - Contains two classes, one that is of not the database but has entity framework classes as it's parameters, and one that generates the PDF.
-3. ./ Security
-    - Contains classes that makes two-factor and session key authentication possible, also one that generates recovery codes.
+## File structure
+
+- Controllers
+    - Two separate controllers have been made for these applications, each containing the appropriate methods and nothing more.
+
+- Models
+    - ./EntityFramework:
+        - Contains a 1:1 replica of the database tables and a database context class, all utilizing the Entity Framework.
+    - ./ Invoice
+        - Contains two classes, one that is of not the database but has entity framework classes as it's parameters, and one that generates the PDF.
+    - ./ Security
+        - Contains classes that makes two-factor and session key authentication possible, also one that generates recovery codes for session authentication.
